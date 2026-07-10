@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SRE Documentation — PKS Auto Insurance Modernized Platform</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;background:#ffffff;color:#1f2328;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h2{font-size:16px;font-weight:700;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px}
+p{margin-bottom:10px}
+.meta{color:#57606a;font-size:12px;margin-bottom:24px}
+.callout{background:#f7f8fa;border:1px solid #e5e7eb;border-left:4px solid #3b82d4;border-radius:6px;padding:14px 16px;margin-bottom:16px}
+.callout p{margin:0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#f7f8fa;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #e5e7eb}
+td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfc}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.badge-red{background:#fde8e8;color:#c0392b}
+.badge-yellow{background:#fef3cd;color:#856404}
+.badge-green{background:#d4edda;color:#155724}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.slo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.slo-card{background:#f7f8fa;border:1px solid #e5e7eb;border-radius:6px;padding:14px;text-align:center}
+.slo-card .val{font-size:20px;font-weight:700;color:#3b82d4}
+.slo-card .lbl{font-size:11px;color:#57606a;margin-top:4px}
+pre{background:#f7f8fa;border:1px solid #e5e7eb;border-radius:6px;padding:12px;font-size:12px;overflow-x:auto;margin-bottom:12px;font-family:"SF Mono",Menlo,monospace}
+code{font-family:"SF Mono",Menlo,monospace;font-size:12px;background:#f7f8fa;padding:1px 5px;border-radius:3px;border:1px solid #e5e7eb}
+ul{margin:6px 0 10px 20px}
+li{margin-bottom:3px}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#57606a;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>SRE Documentation — PKS Auto Insurance Modernized Platform</h1>
+<p class="meta">Version: 1.0 &nbsp;|&nbsp; Domain: Site Reliability Engineering &nbsp;|&nbsp; Author: IBM Bob</p>
+
+<!-- 1. Service Inventory -->
+<h2>1. Service Inventory &amp; Ownership</h2>
+<table>
+<tr><th>Service</th><th>Port</th><th>Owner Team</th><th>Repo</th><th>Technology</th></tr>
+<tr><td><strong>api-gateway</strong></td><td>8080</td><td>Platform Team</td><td>api-gateway</td><td>Spring Cloud Gateway 4.x</td></tr>
+<tr><td><strong>user-service</strong></td><td>8081</td><td>Identity Team</td><td>user-service</td><td>Spring Boot 3.x, JPA, PostgreSQL</td></tr>
+<tr><td><strong>vehicle-service</strong></td><td>8082</td><td>Insurance Team</td><td>vehicle-service</td><td>Spring Boot 3.x, JPA, PostgreSQL</td></tr>
+<tr><td><strong>premium-service</strong></td><td>8083</td><td>Insurance Team</td><td>premium-service</td><td>Spring Boot 3.x, REST client</td></tr>
+<tr><td><strong>frontend</strong></td><td>3000</td><td>UI Team</td><td>frontend</td><td>React 18, Vite, Nginx</td></tr>
+<tr><td><strong>PostgreSQL</strong></td><td>5432</td><td>Platform Team</td><td>infra/db</td><td>PostgreSQL 15, per-schema isolation</td></tr>
+</table>
+
+<!-- 2. SLOs -->
+<h2>2. Service Level Objectives (SLOs)</h2>
+<div class="slo-grid">
+<div class="slo-card"><div class="val">99.9%</div><div class="lbl">Availability SLO</div></div>
+<div class="slo-card"><div class="val">&lt;300ms</div><div class="lbl">P95 Latency</div></div>
+<div class="slo-card"><div class="val">&lt;0.1%</div><div class="lbl">Error Rate</div></div>
+<div class="slo-card"><div class="val">43.8 min</div><div class="lbl">Error Budget / month</div></div>
+</div>
+<table>
+<tr><th>Service</th><th>Availability</th><th>P95 Latency</th><th>Error Rate</th><th>Throughput</th></tr>
+<tr><td>api-gateway</td><td>99.95%</td><td>&lt;100ms</td><td>&lt;0.05%</td><td>1000 req/s</td></tr>
+<tr><td>user-service</td><td>99.9%</td><td>&lt;300ms</td><td>&lt;0.1%</td><td>200 req/s</td></tr>
+<tr><td>vehicle-service</td><td>99.9%</td><td>&lt;300ms</td><td>&lt;0.1%</td><td>200 req/s</td></tr>
+<tr><td>premium-service</td><td>99.9%</td><td>&lt;500ms</td><td>&lt;0.1%</td><td>100 req/s</td></tr>
+<tr><td>frontend</td><td>99.9%</td><td>&lt;2s FCP</td><td>&lt;0.1%</td><td>500 req/s</td></tr>
+</table>
+
+<!-- 3. SLI Definitions -->
+<h2>3. SLI Definitions</h2>
+<table>
+<tr><th>Service</th><th>SLI Type</th><th>Metric</th><th>Prometheus Query</th></tr>
+<tr><td>api-gateway</td><td>Availability</td><td>HTTP 2xx ratio</td><td><code>rate(http_requests_total{status=~"2.."}[5m])</code></td></tr>
+<tr><td>user-service</td><td>Latency</td><td>P95 response time</td><td><code>histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))</code></td></tr>
+<tr><td>vehicle-service</td><td>Latency</td><td>P95 response time</td><td><code>histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))</code></td></tr>
+<tr><td>premium-service</td><td>Error Rate</td><td>5xx error ratio</td><td><code>rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])</code></td></tr>
+<tr><td>PostgreSQL</td><td>Availability</td><td>DB connection success</td><td><code>pg_up</code></td></tr>
+</table>
+
+<!-- 4. SLAs -->
+<h2>4. Service Level Agreements (SLAs)</h2>
+<table>
+<tr><th>Tier</th><th>Customers</th><th>Availability</th><th>RTO</th><th>RPO</th><th>Support SLA</th></tr>
+<tr><td><span class="badge badge-blue">Platinum</span></td><td>Enterprise</td><td>99.95%</td><td>15 min</td><td>1 hour</td><td>15-min response</td></tr>
+<tr><td><span class="badge badge-green">Gold</span></td><td>Business</td><td>99.9%</td><td>1 hour</td><td>4 hours</td><td>1-hour response</td></tr>
+<tr><td><span class="badge badge-yellow">Silver</span></td><td>Individual</td><td>99.5%</td><td>4 hours</td><td>24 hours</td><td>4-hour response</td></tr>
+</table>
+
+<!-- 5. Health Checks -->
+<h2>5. Health Checks</h2>
+<table>
+<tr><th>Service</th><th>Liveness Probe</th><th>Readiness Probe</th><th>Startup Probe</th></tr>
+<tr><td>api-gateway</td><td>GET /actuator/health/liveness :8080</td><td>GET /actuator/health/readiness :8080</td><td>Delay 15s, Period 10s</td></tr>
+<tr><td>user-service</td><td>GET /actuator/health/liveness :8081</td><td>GET /actuator/health/readiness :8081</td><td>Delay 20s, Period 10s</td></tr>
+<tr><td>vehicle-service</td><td>GET /actuator/health/liveness :8082</td><td>GET /actuator/health/readiness :8082</td><td>Delay 20s, Period 10s</td></tr>
+<tr><td>premium-service</td><td>GET /actuator/health/liveness :8083</td><td>GET /actuator/health/readiness :8083</td><td>Delay 20s, Period 10s</td></tr>
+</table>
+<h3>Spring Boot Actuator Health YAML</h3>
+<pre>management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: db,diskSpace
+        liveness:
+          include: ping</pre>
+
+<!-- 6. Alerting Rules -->
+<h2>6. Alerting Rules</h2>
+<table>
+<tr><th>Alert Name</th><th>Condition</th><th>Severity</th><th>Duration</th><th>Action</th></tr>
+<tr><td>ServiceDown</td><td>up == 0</td><td><span class="badge badge-red">critical</span></td><td>1m</td><td>Page on-call; auto-restart pod</td></tr>
+<tr><td>HighErrorRate</td><td>error_rate &gt; 1%</td><td><span class="badge badge-red">critical</span></td><td>5m</td><td>Alert Slack #ops-alerts</td></tr>
+<tr><td>HighLatencyP95</td><td>p95 &gt; 500ms</td><td><span class="badge badge-yellow">warning</span></td><td>10m</td><td>Alert Slack #ops-warnings; scale HPA</td></tr>
+<tr><td>PodRestartLoop</td><td>restart_count &gt; 5 in 10m</td><td><span class="badge badge-red">critical</span></td><td>5m</td><td>Page on-call; collect logs</td></tr>
+<tr><td>DBConnectionPoolSaturation</td><td>pool_usage &gt; 90%</td><td><span class="badge badge-yellow">warning</span></td><td>5m</td><td>Alert DBA; increase pool size</td></tr>
+<tr><td>DiskSpaceLow</td><td>disk_free &lt; 10%</td><td><span class="badge badge-yellow">warning</span></td><td>5m</td><td>Alert Slack; cleanup job</td></tr>
+<tr><td>JvmHeapHigh</td><td>jvm_heap_used &gt; 85%</td><td><span class="badge badge-yellow">warning</span></td><td>10m</td><td>Alert Slack; analyse heap dump</td></tr>
+<tr><td>CertificateExpiry</td><td>cert_expiry &lt; 14 days</td><td><span class="badge badge-yellow">warning</span></td><td>1h</td><td>Alert security; renew cert</td></tr>
+<tr><td>SLOBudgetBurn</td><td>budget_burn_rate &gt; 2x</td><td><span class="badge badge-red">critical</span></td><td>30m</td><td>Page SRE lead; error budget review</td></tr>
+</table>
+
+<!-- 7. Incident Management -->
+<h2>7. Incident Management</h2>
+<h3>Severity Classification</h3>
+<table>
+<tr><th>Severity</th><th>Impact</th><th>Response Time</th><th>Resolution Target</th></tr>
+<tr><td><span class="badge badge-red">SEV-1</span></td><td>Full service outage, all users impacted</td><td>5 minutes</td><td>30 minutes</td></tr>
+<tr><td><span class="badge badge-red">SEV-2</span></td><td>Partial outage, major feature unavailable</td><td>15 minutes</td><td>2 hours</td></tr>
+<tr><td><span class="badge badge-yellow">SEV-3</span></td><td>Degraded performance, workaround available</td><td>30 minutes</td><td>8 hours</td></tr>
+<tr><td><span class="badge badge-yellow">SEV-4</span></td><td>Minor issue, no user-facing impact</td><td>4 hours</td><td>Next business day</td></tr>
+</table>
+<h3>7-Step Incident Runbook Template</h3>
+<ol style="margin:8px 0 12px 20px">
+<li><strong>Detect:</strong> Alert fires (PagerDuty / Slack); on-call acknowledges within SLA.</li>
+<li><strong>Triage:</strong> Identify affected services via Grafana dashboard; classify SEV.</li>
+<li><strong>Communicate:</strong> Create incident Slack channel #inc-&lt;date&gt;-&lt;sev&gt;; notify stakeholders.</li>
+<li><strong>Investigate:</strong> Correlate logs (Kibana), metrics (Grafana), traces (Jaeger).</li>
+<li><strong>Mitigate:</strong> Apply immediate fix (rollback, scale, circuit-break, feature flag off).</li>
+<li><strong>Resolve:</strong> Confirm SLO metrics recovered; close incident; notify stakeholders.</li>
+<li><strong>Post-Mortem:</strong> Blameless RCA within 48h; action items tracked in JIRA.</li>
+</ol>
+
+<!-- 8. Capacity Planning -->
+<h2>8. Capacity Planning</h2>
+<table>
+<tr><th>Service</th><th>Min Replicas</th><th>Max Replicas</th><th>CPU Request</th><th>CPU Limit</th><th>Mem Request</th><th>Mem Limit</th></tr>
+<tr><td>api-gateway</td><td>2</td><td>8</td><td>100m</td><td>500m</td><td>256Mi</td><td>512Mi</td></tr>
+<tr><td>user-service</td><td>2</td><td>6</td><td>200m</td><td>500m</td><td>384Mi</td><td>768Mi</td></tr>
+<tr><td>vehicle-service</td><td>2</td><td>6</td><td>200m</td><td>500m</td><td>384Mi</td><td>768Mi</td></tr>
+<tr><td>premium-service</td><td>2</td><td>6</td><td>200m</td><td>500m</td><td>384Mi</td><td>768Mi</td></tr>
+<tr><td>frontend (Nginx)</td><td>2</td><td>4</td><td>50m</td><td>200m</td><td>64Mi</td><td>128Mi</td></tr>
+<tr><td>PostgreSQL</td><td>1 (primary)</td><td>2 (+ replica)</td><td>500m</td><td>2000m</td><td>1Gi</td><td>4Gi</td></tr>
+</table>
+
+<!-- 9. HPA Policy -->
+<h2>9. HPA Policy</h2>
+<pre>apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: user-service-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: user-service
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300</pre>
+
+<!-- 10. Observability Stack -->
+<h2>10. Observability Stack</h2>
+<table>
+<tr><th>Pillar</th><th>Tool</th><th>Purpose</th><th>Retention</th></tr>
+<tr><td>Metrics</td><td>Prometheus + Grafana</td><td>Service metrics, JVM, DB pool, SLO dashboards</td><td>15 days hot / 90 days cold</td></tr>
+<tr><td>Logs</td><td>Elasticsearch + Fluentd + Kibana (EFK)</td><td>Structured JSON logs, error search, audit</td><td>30 days hot / 1 year cold</td></tr>
+<tr><td>Traces</td><td>Jaeger + OpenTelemetry</td><td>Distributed tracing, latency breakdown</td><td>7 days</td></tr>
+<tr><td>Alerting</td><td>Alertmanager + PagerDuty + Slack</td><td>Alert routing, escalation, on-call</td><td>—</td></tr>
+<tr><td>Dashboards</td><td>Grafana</td><td>SLO overview, per-service RED, DB health</td><td>—</td></tr>
+</table>
+
+<!-- 11. Backup & DR -->
+<h2>11. Backup &amp; Disaster Recovery</h2>
+<table>
+<tr><th>Component</th><th>Backup Method</th><th>Frequency</th><th>Retention</th><th>DR Strategy</th></tr>
+<tr><td>PostgreSQL</td><td>pg_dump → S3 + WAL archiving</td><td>Daily full, 5-min WAL</td><td>30 days</td><td>Standby replica; PITR</td></tr>
+<tr><td>App Config</td><td>GitOps (ArgoCD)</td><td>On every commit</td><td>Indefinite</td><td>Redeploy from Git</td></tr>
+<tr><td>Secrets</td><td>HashiCorp Vault snapshots</td><td>Daily</td><td>7 days</td><td>Vault HA cluster</td></tr>
+<tr><td>Container Images</td><td>Registry replication</td><td>On push</td><td>90 days</td><td>Multi-region registry</td></tr>
+</table>
+
+<!-- 12. Change Management -->
+<h2>12. Change Management Release Gates</h2>
+<ul>
+<li>✅ All unit &amp; integration tests pass (100% gate)</li>
+<li>✅ SAST scan: zero Critical/High findings</li>
+<li>✅ Container image scan: zero Critical CVEs</li>
+<li>✅ DAST scan on staging environment passes</li>
+<li>✅ SLO metrics stable on staging for ≥15 minutes post-deploy</li>
+<li>✅ 2-person approval for production merge (CODEOWNERS)</li>
+<li>✅ Rollback plan documented and tested</li>
+</ul>
+
+<!-- 13. Operational Runbooks -->
+<h2>13. Key Operational Runbooks</h2>
+<h3>RB-01: Rollback a Service</h3>
+<pre>kubectl rollout undo deployment/user-service -n pks-insurance
+kubectl rollout status deployment/user-service -n pks-insurance</pre>
+<h3>RB-02: Scale a Service Manually</h3>
+<pre>kubectl scale deployment/premium-service --replicas=4 -n pks-insurance</pre>
+<h3>RB-03: View Live Logs</h3>
+<pre>kubectl logs -f deployment/vehicle-service -n pks-insurance --tail=100</pre>
+<h3>RB-04: Force DB Connection Pool Reset</h3>
+<pre>kubectl rollout restart deployment/user-service -n pks-insurance</pre>
+<h3>RB-05: Check SLO Error Budget</h3>
+<pre># Query Prometheus for 30-day error budget remaining
+curl -s 'http://prometheus:9090/api/v1/query' \
+  --data-urlencode 'query=1 - (sum(rate(http_requests_total{status=~"5.."}[30d])) / sum(rate(http_requests_total[30d])))'</pre>
+
+<!-- 14. Toil Reduction -->
+<h2>14. Toil Reduction Targets</h2>
+<table>
+<tr><th>Toil Item</th><th>Current Effort</th><th>Automation Target</th><th>Tool</th></tr>
+<tr><td>Manual deployment</td><td>2h / release</td><td>Eliminate</td><td>ArgoCD GitOps</td></tr>
+<tr><td>Certificate renewal</td><td>2h / quarter</td><td>Eliminate</td><td>cert-manager</td></tr>
+<tr><td>DB backup verification</td><td>1h / week</td><td>Eliminate</td><td>Automated restore test</td></tr>
+<tr><td>Log review</td><td>30min / day</td><td>Reduce 90%</td><td>Kibana alerts + EFK</td></tr>
+<tr><td>Scaling decisions</td><td>Ad-hoc</td><td>Eliminate</td><td>HPA + KEDA</td></tr>
+</table>
+
+<footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Legacy Application Analysis — PKS Auto Insurance</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;background:#ffffff;color:#1f2328;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h2{font-size:16px;font-weight:700;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px;color:#1f2328}
+p{margin-bottom:10px;color:#1f2328}
+.meta{color:#57606a;font-size:12px;margin-bottom:24px}
+.callout{background:#f7f8fa;border:1px solid #e5e7eb;border-left:4px solid #3b82d4;border-radius:6px;padding:14px 16px;margin-bottom:16px}
+.callout p{margin:0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#f7f8fa;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #e5e7eb}
+td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfc}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.badge-eol{background:#fde8e8;color:#c0392b}
+.badge-old{background:#fef3cd;color:#856404}
+.badge-ok{background:#d4edda;color:#155724}
+.badge-info{background:#dbeafe;color:#1e40af}
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:12px 0}
+.flow-box{background:#3b82d4;color:#fff;font-size:12px;font-weight:600;padding:6px 12px;border-radius:6px}
+.flow-arrow{color:#57606a;font-size:16px;font-weight:700}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.card{background:#f7f8fa;border:1px solid #e5e7eb;border-radius:6px;padding:14px}
+.card h3{margin-top:0}
+ul{margin:6px 0 10px 20px}
+li{margin-bottom:3px}
+code{font-family:"SF Mono",Menlo,monospace;font-size:12px;background:#f7f8fa;padding:1px 5px;border-radius:3px;border:1px solid #e5e7eb}
+.risk-high{color:#c0392b;font-weight:600}
+.risk-med{color:#856404;font-weight:600}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#57606a;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Legacy Application Analysis — PKS Auto Insurance</h1>
+<p class="meta">Artifact ID: 01_application_analysis &nbsp;|&nbsp; Analysis Date: 2025 &nbsp;|&nbsp; Analyst: IBM Bob</p>
+
+<!-- 1. Executive Summary -->
+<h2>1. Executive Summary</h2>
+<div class="callout">
+<p>PKS Auto Insurance is a <strong>Struts 1.3 monolithic web application</strong> deployed as a WAR file. It manages customer registration, vehicle management, insurance quoting, and administrative operations. The codebase relies on end-of-life frameworks (Struts 1.3, Spring 5.2, Hibernate 3.5) running on Java 1.6, presenting significant security vulnerabilities and modernization debt.</p>
+</div>
+<div class="grid2">
+<div class="card"><h3>Runtime</h3><p>Java 1.6 (EOL 2013), deployed as <code>.war</code> on Tomcat</p></div>
+<div class="card"><h3>Persistence</h3><p>HSQLDB 1.8 (in-memory/file), Hibernate 3.5 ORM</p></div>
+<div class="card"><h3>Web Tier</h3><p>Struts 1.3 ActionServlet, Tiles 1.3, JSTL 1.2</p></div>
+<div class="card"><h3>IoC/DI</h3><p>Spring 5.2 (wired via XML config), Spring Security commented out</p></div>
+</div>
+
+<!-- 2. Technology Stack -->
+<h2>2. Technology Stack</h2>
+<table>
+<tr><th>Dependency</th><th>Version</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Java</td><td>1.6</td><td><span class="badge badge-eol">EOL</span></td><td>EOL Feb 2013</td></tr>
+<tr><td>Apache Struts</td><td>1.3.10</td><td><span class="badge badge-eol">EOL</span></td><td>EOL 2013, multiple CVEs</td></tr>
+<tr><td>Spring Framework</td><td>5.2.x</td><td><span class="badge badge-old">Maintenance</span></td><td>EOL Dec 2023</td></tr>
+<tr><td>Spring Security</td><td>5.2.x</td><td><span class="badge badge-old">Maintenance</span></td><td>Config commented out</td></tr>
+<tr><td>Hibernate ORM</td><td>3.5.6</td><td><span class="badge badge-eol">EOL</span></td><td>EOL, no JPA 2.x</td></tr>
+<tr><td>HSQLDB</td><td>1.8.0</td><td><span class="badge badge-eol">EOL</span></td><td>In-memory only, not production-grade</td></tr>
+<tr><td>Struts Tiles</td><td>1.3.10</td><td><span class="badge badge-eol">EOL</span></td><td>Bundled with Struts 1</td></tr>
+<tr><td>JSTL</td><td>1.2</td><td><span class="badge badge-ok">Stable</span></td><td>Still usable</td></tr>
+<tr><td>Commons Validator</td><td>1.3.1</td><td><span class="badge badge-old">Maintenance</span></td><td>Outdated</td></tr>
+<tr><td>Commons BeanUtils</td><td>1.8.3</td><td><span class="badge badge-old">Maintenance</span></td><td>Outdated</td></tr>
+<tr><td>Commons Logging</td><td>1.1.1</td><td><span class="badge badge-old">Maintenance</span></td><td>Superseded by SLF4J</td></tr>
+<tr><td>Commons Digester</td><td>1.8</td><td><span class="badge badge-eol">EOL</span></td><td>No active development</td></tr>
+<tr><td>Commons FileUpload</td><td>1.3.3</td><td><span class="badge badge-old">Maintenance</span></td><td>Patched but outdated</td></tr>
+<tr><td>Log4j</td><td>1.2.17</td><td><span class="badge badge-eol">EOL</span></td><td>EOL 2015, security risk</td></tr>
+<tr><td>Antlr</td><td>2.7.7</td><td><span class="badge badge-old">Maintenance</span></td><td>Required by Hibernate 3</td></tr>
+<tr><td>javassist</td><td>3.9.0</td><td><span class="badge badge-old">Maintenance</span></td><td>Required by Hibernate 3</td></tr>
+<tr><td>Servlet API</td><td>2.5</td><td><span class="badge badge-eol">EOL</span></td><td>Very old servlet spec</td></tr>
+</table>
+
+<!-- 3. Architectural Overview -->
+<h2>3. Architectural Overview</h2>
+<div class="flow">
+<div class="flow-box">Browser</div><div class="flow-arrow">→</div>
+<div class="flow-box">ActionServlet</div><div class="flow-arrow">→</div>
+<div class="flow-box">Action</div><div class="flow-arrow">→</div>
+<div class="flow-box">Service Layer</div><div class="flow-arrow">→</div>
+<div class="flow-box">DAO Layer</div><div class="flow-arrow">→</div>
+<div class="flow-box">HSQLDB</div>
+</div>
+<p>The application follows a classic MVC pattern using Struts 1.3. The <code>ActionServlet</code> is the front controller, dispatching to <code>Action</code> subclasses based on URL mappings in <code>struts-config.xml</code>. Actions call injected Spring services, which delegate to Hibernate-backed DAOs. All request/response objects are Struts <code>ActionForm</code> subclasses. The view layer uses JSP + Tiles layouts with JSTL expressions.</p>
+
+<!-- 4. Application Inventory -->
+<h2>4. Application Inventory</h2>
+<h3>Action Classes (8)</h3>
+<table>
+<tr><th>Class</th><th>URL Mapping</th><th>Responsibility</th></tr>
+<tr><td><code>LoginAction</code></td><td>/login</td><td>Authenticates user credentials against DB</td></tr>
+<tr><td><code>LogoutAction</code></td><td>/logout</td><td>Invalidates HTTP session</td></tr>
+<tr><td><code>RegisterUserAction</code></td><td>/registerUser</td><td>Creates new customer account</td></tr>
+<tr><td><code>RegisterVehicleAction</code></td><td>/registerVehicle</td><td>Adds vehicle to customer account</td></tr>
+<tr><td><code>UpdateUserAction</code></td><td>/updateUser</td><td>Updates customer profile</td></tr>
+<tr><td><code>QuoteAction</code></td><td>/getQuote</td><td>Calculates insurance premium</td></tr>
+<tr><td><code>AdminSearchUserAction</code></td><td>/adminSearchUser</td><td>Admin: search customers by criteria</td></tr>
+<tr><td><code>AdminRemoveUserAction</code></td><td>/adminRemoveUser</td><td>Admin: remove customer account</td></tr>
+</table>
+
+<h3>Services (2)</h3>
+<table>
+<tr><th>Interface</th><th>Implementation</th><th>Methods</th></tr>
+<tr><td><code>UserService</code></td><td><code>UserServiceImpl</code></td><td>login, register, update, search, remove, getAllUsers, getUserByEmail</td></tr>
+<tr><td><code>VehicleService</code></td><td><code>VehicleServiceImpl</code></td><td>registerVehicle, getVehiclesByUser, calculatePremium</td></tr>
+</table>
+
+<h3>DAOs (2)</h3>
+<table>
+<tr><th>Interface</th><th>Implementation</th><th>Technology</th></tr>
+<tr><td><code>UserDAO</code></td><td><code>UserDAOImpl</code></td><td>HibernateTemplate, HSQLDB</td></tr>
+<tr><td><code>VehicleDAO</code></td><td><code>VehicleDAOImpl</code></td><td>HibernateTemplate, HSQLDB</td></tr>
+</table>
+
+<h3>Domain Entities (3)</h3>
+<table>
+<tr><th>Class</th><th>Table</th><th>Key Fields</th></tr>
+<tr><td><code>User</code></td><td>CUSTOMER</td><td>id, firstName, lastName, email, password, ssn, dob, address</td></tr>
+<tr><td><code>Vehicle</code></td><td>VEHICLE</td><td>id, make, model, year, vin, userId</td></tr>
+<tr><td><code>UserRole</code></td><td>USER_ROLE</td><td>id, email, roleName</td></tr>
+</table>
+
+<h3>Forms (2) &amp; Helpers (2)</h3>
+<table>
+<tr><th>Type</th><th>Class</th><th>Purpose</th></tr>
+<tr><td>ActionForm</td><td><code>UserForm</code></td><td>Binds user registration/update request data</td></tr>
+<tr><td>ActionForm</td><td><code>VehicleForm</code></td><td>Binds vehicle registration request data</td></tr>
+<tr><td>Helper</td><td><code>PremiumCalculator</code></td><td>Encapsulates risk scoring algorithm</td></tr>
+<tr><td>Helper</td><td><code>ValidationHelper</code></td><td>Input validation utilities</td></tr>
+</table>
+
+<h3>JSP Views</h3>
+<ul>
+<li><code>login.jsp</code> — Login form</li>
+<li><code>register.jsp</code> — User registration form</li>
+<li><code>dashboard.jsp</code> — Customer home page</li>
+<li><code>registerVehicle.jsp</code> — Vehicle entry form</li>
+<li><code>updateUser.jsp</code> — Profile edit form</li>
+<li><code>quote.jsp</code> — Premium quote display</li>
+<li><code>admin.jsp</code> — Admin user search/remove</li>
+</ul>
+
+<!-- 5. Database Schema -->
+<h2>5. Database Schema</h2>
+<h3>CUSTOMER Table</h3>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+<tr><td>ID</td><td>INTEGER</td><td>PK, AUTO_INCREMENT</td></tr>
+<tr><td>FIRSTNAME</td><td>VARCHAR(50)</td><td>NOT NULL</td></tr>
+<tr><td>LASTNAME</td><td>VARCHAR(50)</td><td>NOT NULL</td></tr>
+<tr><td>EMAIL</td><td>VARCHAR(100)</td><td>NOT NULL, UNIQUE</td></tr>
+<tr><td>PASSWD</td><td>VARCHAR(50)</td><td>NOT NULL — <span class="risk-high">plain-text</span></td></tr>
+<tr><td>SSN</td><td>VARCHAR(11)</td><td>Stored plain — <span class="risk-high">PII risk</span></td></tr>
+<tr><td>DOB</td><td>DATE</td><td>NOT NULL</td></tr>
+<tr><td>ADDRESS</td><td>VARCHAR(200)</td><td></td></tr>
+<tr><td>CITY</td><td>VARCHAR(50)</td><td></td></tr>
+<tr><td>STATE</td><td>VARCHAR(30)</td><td></td></tr>
+<tr><td>ZIP</td><td>VARCHAR(10)</td><td></td></tr>
+<tr><td>PHONE</td><td>VARCHAR(15)</td><td></td></tr>
+</table>
+
+<h3>VEHICLE Table</h3>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+<tr><td>ID</td><td>INTEGER</td><td>PK, AUTO_INCREMENT</td></tr>
+<tr><td>MAKE</td><td>VARCHAR(50)</td><td>NOT NULL</td></tr>
+<tr><td>MODEL</td><td>VARCHAR(50)</td><td>NOT NULL</td></tr>
+<tr><td>YEAR</td><td>INTEGER</td><td>NOT NULL</td></tr>
+<tr><td>VIN</td><td>VARCHAR(17)</td><td>UNIQUE</td></tr>
+<tr><td>CUSTOMER_ID</td><td>INTEGER</td><td>FK → CUSTOMER.ID</td></tr>
+</table>
+
+<h3>USER_ROLE Table</h3>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+<tr><td>ID</td><td>INTEGER</td><td>PK, AUTO_INCREMENT</td></tr>
+<tr><td>EMAIL</td><td>VARCHAR(100)</td><td>FK → CUSTOMER.EMAIL</td></tr>
+<tr><td>ROLE_NAME</td><td>VARCHAR(30)</td><td>e.g. ROLE_USER, ROLE_ADMIN</td></tr>
+</table>
+
+<!-- 6. Business Functions -->
+<h2>6. Business Functions</h2>
+<table>
+<tr><th>#</th><th>Function</th><th>JSP</th><th>Action</th><th>Service Method</th></tr>
+<tr><td>BF-01</td><td>User Login</td><td>login.jsp</td><td>LoginAction</td><td>UserService.login()</td></tr>
+<tr><td>BF-02</td><td>User Logout</td><td>—</td><td>LogoutAction</td><td>session.invalidate()</td></tr>
+<tr><td>BF-03</td><td>Register Customer</td><td>register.jsp</td><td>RegisterUserAction</td><td>UserService.register()</td></tr>
+<tr><td>BF-04</td><td>Register Vehicle</td><td>registerVehicle.jsp</td><td>RegisterVehicleAction</td><td>VehicleService.register()</td></tr>
+<tr><td>BF-05</td><td>Update Profile</td><td>updateUser.jsp</td><td>UpdateUserAction</td><td>UserService.update()</td></tr>
+<tr><td>BF-06</td><td>Get Quote</td><td>quote.jsp</td><td>QuoteAction</td><td>VehicleService.calculatePremium()</td></tr>
+<tr><td>BF-07</td><td>Admin Search User</td><td>admin.jsp</td><td>AdminSearchUserAction</td><td>UserService.searchUsers()</td></tr>
+<tr><td>BF-08</td><td>Admin Remove User</td><td>admin.jsp</td><td>AdminRemoveUserAction</td><td>UserService.removeUser()</td></tr>
+</table>
+
+<!-- 7. Premium Calculation Algorithm -->
+<h2>7. Premium Calculation Algorithm</h2>
+<div class="callout">
+<p>The risk-based premium formula used in <code>PremiumCalculator</code>:</p>
+</div>
+<table>
+<tr><th>Factor</th><th>Condition</th><th>Adjustment</th></tr>
+<tr><td>Base Premium</td><td>All policies</td><td>$500 base annual</td></tr>
+<tr><td>Vehicle Age</td><td>year &lt; currentYear - 10</td><td>+$100 (older vehicle)</td></tr>
+<tr><td>Driver Age</td><td>age &lt; 25</td><td>+$200 (young driver)</td></tr>
+<tr><td>Driver Age</td><td>age &gt; 65</td><td>+$150 (senior driver)</td></tr>
+<tr><td>Make Surcharge</td><td>Luxury brands</td><td>+$300</td></tr>
+<tr><td>Model Year</td><td>Current year model</td><td>-$50 (new car discount)</td></tr>
+<tr><td>Total</td><td>—</td><td>Sum of all applicable factors</td></tr>
+</table>
+<p>The formula is implemented as a series of if-else conditionals. No external rating engine is used. <span class="risk-med">Risk: Business logic tightly coupled to service layer — no unit tests in legacy code.</span></p>
+
+<!-- 8. Security Assessment -->
+<h2>8. Security Assessment</h2>
+<table>
+<tr><th>Finding</th><th>Severity</th><th>Detail</th></tr>
+<tr><td>Plain-text passwords</td><td><span class="badge badge-eol">CRITICAL</span></td><td>PASSWD stored as plain VARCHAR; no hashing</td></tr>
+<tr><td>Hardcoded admin credential</td><td><span class="badge badge-eol">CRITICAL</span></td><td>admin/admin123 seeded directly in SQL init script</td></tr>
+<tr><td>Spring Security disabled</td><td><span class="badge badge-eol">CRITICAL</span></td><td>spring-security.xml config is commented out</td></tr>
+<tr><td>No CSRF protection</td><td><span class="badge badge-old">HIGH</span></td><td>Struts 1.3 has no built-in CSRF tokens</td></tr>
+<tr><td>Session fixation</td><td><span class="badge badge-old">HIGH</span></td><td>Session not regenerated after login</td></tr>
+<tr><td>SSN stored plain-text</td><td><span class="badge badge-old">HIGH</span></td><td>Sensitive PII in CUSTOMER.SSN column unencrypted</td></tr>
+<tr><td>SQL via HibernateTemplate</td><td><span class="badge badge-info">MEDIUM</span></td><td>Some HQL queries use string concatenation</td></tr>
+<tr><td>No input sanitisation</td><td><span class="badge badge-info">MEDIUM</span></td><td>ActionForm fields not consistently validated</td></tr>
+</table>
+
+<!-- 9. Maven Dependency Inventory -->
+<h2>9. Maven Dependency Inventory</h2>
+<table>
+<tr><th>groupId</th><th>artifactId</th><th>Version</th><th>Scope</th></tr>
+<tr><td>org.apache.struts</td><td>struts-core</td><td>1.3.10</td><td>compile</td></tr>
+<tr><td>org.apache.struts</td><td>struts-tiles</td><td>1.3.10</td><td>compile</td></tr>
+<tr><td>org.apache.struts</td><td>struts-extras</td><td>1.3.10</td><td>compile</td></tr>
+<tr><td>org.springframework</td><td>spring-core</td><td>5.2.22</td><td>compile</td></tr>
+<tr><td>org.springframework</td><td>spring-context</td><td>5.2.22</td><td>compile</td></tr>
+<tr><td>org.springframework</td><td>spring-orm</td><td>5.2.22</td><td>compile</td></tr>
+<tr><td>org.springframework.security</td><td>spring-security-web</td><td>5.2.15</td><td>compile</td></tr>
+<tr><td>org.hibernate</td><td>hibernate-core</td><td>3.5.6-Final</td><td>compile</td></tr>
+<tr><td>hsqldb</td><td>hsqldb</td><td>1.8.0.10</td><td>compile</td></tr>
+<tr><td>javax.servlet</td><td>servlet-api</td><td>2.5</td><td>provided</td></tr>
+<tr><td>javax.servlet</td><td>jstl</td><td>1.2</td><td>compile</td></tr>
+<tr><td>commons-validator</td><td>commons-validator</td><td>1.3.1</td><td>compile</td></tr>
+<tr><td>commons-beanutils</td><td>commons-beanutils</td><td>1.8.3</td><td>compile</td></tr>
+<tr><td>commons-logging</td><td>commons-logging</td><td>1.1.1</td><td>compile</td></tr>
+<tr><td>commons-digester</td><td>commons-digester</td><td>1.8</td><td>compile</td></tr>
+<tr><td>log4j</td><td>log4j</td><td>1.2.17</td><td>compile</td></tr>
+<tr><td>antlr</td><td>antlr</td><td>2.7.7</td><td>compile</td></tr>
+</table>
+
+<!-- 10. Technical Debt & Modernization Blockers -->
+<h2>10. Technical Debt &amp; Modernization Blockers</h2>
+<table>
+<tr><th>#</th><th>Item</th><th>Impact</th><th>Priority</th></tr>
+<tr><td>TD-01</td><td>Java 1.6 runtime</td><td>No lambda, streams, modern APIs</td><td><span class="badge badge-eol">Critical</span></td></tr>
+<tr><td>TD-02</td><td>Struts 1.3 EOL</td><td>No security patches, no community</td><td><span class="badge badge-eol">Critical</span></td></tr>
+<tr><td>TD-03</td><td>HSQLDB persistence</td><td>Data lost on restart; not cluster-capable</td><td><span class="badge badge-eol">Critical</span></td></tr>
+<tr><td>TD-04</td><td>Plain-text passwords</td><td>Immediate credential exposure risk</td><td><span class="badge badge-eol">Critical</span></td></tr>
+<tr><td>TD-05</td><td>Hibernate 3.5</td><td>No JPA 2.x, no Spring Data, no criteria API</td><td><span class="badge badge-old">High</span></td></tr>
+<tr><td>TD-06</td><td>Monolithic WAR</td><td>Cannot scale individual features independently</td><td><span class="badge badge-old">High</span></td></tr>
+<tr><td>TD-07</td><td>No test suite</td><td>Regression risk during modernization</td><td><span class="badge badge-old">High</span></td></tr>
+<tr><td>TD-08</td><td>XML-heavy config</td><td>struts-config.xml, applicationContext.xml brittle</td><td><span class="badge badge-info">Medium</span></td></tr>
+<tr><td>TD-09</td><td>Log4j 1.x</td><td>EOL, Log4Shell family vulnerabilities</td><td><span class="badge badge-old">High</span></td></tr>
+<tr><td>TD-10</td><td>No containerisation</td><td>Environment-dependent deployment, no 12-factor</td><td><span class="badge badge-info">Medium</span></td></tr>
+</table>
+
+<!-- 11. Target Architecture Summary -->
+<h2>11. Target Architecture Summary</h2>
+<div class="callout">
+<p>The modernized platform decomposes the monolith into <strong>3 Spring Boot 3.x microservices</strong> (user-service, vehicle-service, premium-service) fronted by an API Gateway, backed by <strong>PostgreSQL</strong>, secured with <strong>JWT + BCrypt</strong>, containerised with Docker, and served by a <strong>React 18 SPA</strong>. Each service owns its schema (plain SQL scripts), exposes REST APIs, and is independently deployable via a DevSecOps CI/CD pipeline. Admin operations (user search, account removal) are part of <strong>user-service</strong> under a <code>ROLE_ADMIN</code> guard.</p>
+</div>
+<div class="flow">
+<div class="flow-box">React SPA</div><div class="flow-arrow">→</div>
+<div class="flow-box">API Gateway :8080</div><div class="flow-arrow">→</div>
+<div class="flow-box">user-service :8081</div>
+</div>
+<div class="flow">
+<div class="flow-box" style="background:#6366f1">vehicle-service :8082</div>
+<div class="flow-box" style="background:#10b981">premium-service :8083</div>
+<div class="flow-arrow">→</div>
+<div class="flow-box" style="background:#0d9488">PostgreSQL :5432</div>
+</div>
+
+<footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

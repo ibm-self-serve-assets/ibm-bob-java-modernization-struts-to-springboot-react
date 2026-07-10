@@ -1,0 +1,302 @@
+// ============================================================
+// Jenkinsfile — PKS Auto Insurance DevSecOps Pipeline
+// Applies to: user-service, vehicle-service, premium-service
+// Parameterised by SERVICE_NAME and VERSION
+// ============================================================
+
+pipeline {
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: maven
+    image: maven:3.9-eclipse-temurin-21
+    command: ['cat']
+    tty: true
+    volumeMounts:
+    - name: m2
+      mountPath: /root/.m2
+  - name: docker
+    image: docker:24-dind
+    securityContext:
+      privileged: true
+    tty: true
+  - name: trivy
+    image: aquasec/trivy:latest
+    command: ['cat']
+    tty: true
+  - name: oc
+    image: quay.io/openshift/origin-cli:latest
+    command: ['cat']
+    tty: true
+  volumes:
+  - name: m2
+    emptyDir: {}
+"""
+        }
+    }
+
+    parameters {
+        string(name: 'SERVICE_NAME',    defaultValue: 'user-service',        description: 'Microservice to build')
+        string(name: 'VERSION',         defaultValue: '1.0.0',               description: 'Release version')
+        string(name: 'GIT_BRANCH',      defaultValue: 'main',                description: 'Git branch to build')
+        booleanParam(name: 'SKIP_DAST', defaultValue: false,                 description: 'Skip DAST stage (dev builds)')
+        booleanParam(name: 'DEPLOY_PROD', defaultValue: false,               description: 'Deploy to production after staging')
+    }
+
+    environment {
+        REGISTRY         = 'quay.io/pks-insurance'
+        OCP_SERVER       = credentials('ocp-server-url')
+        OCP_TOKEN        = credentials('ocp-service-account-token')
+        SONAR_TOKEN      = credentials('sonarqube-token')
+        SONAR_HOST       = 'https://sonarqube.pks.internal'
+        OCP_NAMESPACE_STG = 'insurance-staging'
+        OCP_NAMESPACE_PRD = 'insurance-prod'
+        IMAGE_TAG        = "${REGISTRY}/${params.SERVICE_NAME}:${params.VERSION}-${env.BUILD_NUMBER}"
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        timeout(time: 45, unit: 'MINUTES')
+        timestamps()
+    }
+
+    stages {
+        // ── Stage 1: Checkout ────────────────────────────────
+        stage('Checkout') {
+            steps {
+                git branch: params.GIT_BRANCH,
+                    url: 'https://github.com/pks/auto-insurance.git',
+                    credentialsId: 'github-credentials'
+                sh 'echo "Build: ${env.BUILD_NUMBER} | Commit: $(git rev-parse --short HEAD)"'
+            }
+        }
+
+        // ── Stage 2: Secrets Detection ───────────────────────
+        stage('Secrets Detection') {
+            steps {
+                container('maven') {
+                    sh '''
+                        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh
+                        ./trufflehog filesystem ./modernized/${SERVICE_NAME} --only-verified --fail
+                    '''
+                }
+            }
+        }
+
+        // ── Stage 3: Build & SAST ────────────────────────────
+        stage('Build & SAST') {
+            steps {
+                container('maven') {
+                    dir("modernized/${params.SERVICE_NAME}") {
+                        sh '''
+                            mvn clean package -DskipTests \
+                                -Dsonar.projectKey=${SERVICE_NAME} \
+                                -Dsonar.host.url=${SONAR_HOST} \
+                                -Dsonar.login=${SONAR_TOKEN} \
+                                sonar:sonar
+                        '''
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: "modernized/${params.SERVICE_NAME}/target/*.jar", fingerprint: true
+                }
+            }
+        }
+
+        // ── Stage 4: Unit Tests ──────────────────────────────
+        stage('Unit Tests') {
+            steps {
+                container('maven') {
+                    dir("modernized/${params.SERVICE_NAME}") {
+                        sh '''
+                            mvn test \
+                                -Djacoco.dataFile=target/jacoco.exec \
+                                org.jacoco:jacoco-maven-plugin:prepare-agent \
+                                org.jacoco:jacoco-maven-plugin:report
+                        '''
+                    }
+                }
+            }
+            post {
+                always {
+                    junit "modernized/${params.SERVICE_NAME}/target/surefire-reports/**/*.xml"
+                    publishCoverage adapters: [jacocoAdapter("modernized/${params.SERVICE_NAME}/target/site/jacoco/jacoco.xml")],
+                                    sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
+                }
+            }
+        }
+
+        // ── Stage 5: Dependency Vulnerability Scan ───────────
+        stage('Dependency Check') {
+            steps {
+                container('maven') {
+                    dir("modernized/${params.SERVICE_NAME}") {
+                        sh '''
+                            mvn org.owasp:dependency-check-maven:check \
+                                -DfailBuildOnCVSS=7 \
+                                -Dformat=ALL \
+                                -DsuppressionFile=../../suppression.xml || true
+                        '''
+                    }
+                }
+            }
+            post {
+                always {
+                    dependencyCheckPublisher pattern: "modernized/${params.SERVICE_NAME}/target/dependency-check-report.xml"
+                }
+            }
+        }
+
+        // ── Stage 6: Container Build ─────────────────────────
+        stage('Build Container Image') {
+            steps {
+                container('docker') {
+                    dir("modernized/${params.SERVICE_NAME}") {
+                        sh "docker build -t ${IMAGE_TAG} ."
+                        sh "docker tag ${IMAGE_TAG} ${REGISTRY}/${params.SERVICE_NAME}:latest"
+                    }
+                }
+            }
+        }
+
+        // ── Stage 7: Container Image Scan ────────────────────
+        stage('Trivy Image Scan') {
+            steps {
+                container('trivy') {
+                    sh '''
+                        trivy image \
+                            --exit-code 1 \
+                            --severity CRITICAL \
+                            --format table \
+                            ${IMAGE_TAG}
+                    '''
+                }
+            }
+        }
+
+        // ── Stage 8: Push Image ──────────────────────────────
+        stage('Push Image') {
+            steps {
+                container('docker') {
+                    withCredentials([usernamePassword(credentialsId: 'quay-credentials',
+                                                     usernameVariable: 'QUAY_USER',
+                                                     passwordVariable: 'QUAY_PASS')]) {
+                        sh '''
+                            docker login quay.io -u ${QUAY_USER} -p ${QUAY_PASS}
+                            docker push ${IMAGE_TAG}
+                            docker push ${REGISTRY}/${SERVICE_NAME}:latest
+                        '''
+                    }
+                }
+            }
+        }
+
+        // ── Stage 9: Deploy to Staging ───────────────────────
+        stage('Deploy to Staging') {
+            steps {
+                container('oc') {
+                    sh '''
+                        oc login ${OCP_SERVER} --token=${OCP_TOKEN} --insecure-skip-tls-verify
+                        oc project ${OCP_NAMESPACE_STG}
+                        oc set image deployment/${SERVICE_NAME} \
+                            ${SERVICE_NAME}=${IMAGE_TAG} \
+                            -n ${OCP_NAMESPACE_STG}
+                        oc rollout status deployment/${SERVICE_NAME} \
+                            -n ${OCP_NAMESPACE_STG} --timeout=5m
+                    '''
+                }
+            }
+        }
+
+        // ── Stage 10: Integration Tests ──────────────────────
+        stage('Integration Tests') {
+            steps {
+                container('maven') {
+                    dir("modernized/${params.SERVICE_NAME}") {
+                        sh '''
+                            mvn verify -P integration-test \
+                                -Dspring.profiles.active=staging \
+                                -Dapp.service.url=${STG_SERVICE_URL}
+                        '''
+                    }
+                }
+            }
+            post {
+                always {
+                    junit "modernized/${params.SERVICE_NAME}/target/failsafe-reports/**/*.xml"
+                }
+            }
+        }
+
+        // ── Stage 11: DAST (OWASP ZAP) ──────────────────────
+        stage('DAST (OWASP ZAP)') {
+            when {
+                expression { !params.SKIP_DAST }
+            }
+            steps {
+                sh '''
+                    docker run --rm -v $(pwd):/zap/wrk/:rw \
+                        -t ghcr.io/zaproxy/zaproxy:stable \
+                        zap-api-scan.py \
+                        -t https://${SERVICE_NAME}.staging.pks.internal/v3/api-docs \
+                        -f openapi \
+                        -r zap-report.html \
+                        -z "-config replacer.full_list\\(0\\).matchtype=REQ_HEADER \
+                               -config replacer.full_list\\(0\\).matchstr=Authorization \
+                               -config replacer.full_list\\(0\\).replacement=Bearer\\ ${STAGING_JWT}"
+                '''
+            }
+            post {
+                always {
+                    publishHTML(target: [allowMissing: true, alwaysLinkToLastBuild: true,
+                                        keepAll: true, reportDir: '.', reportFiles: 'zap-report.html',
+                                        reportName: 'OWASP ZAP Report'])
+                }
+            }
+        }
+
+        // ── Stage 12: Production Deploy (gated) ──────────────
+        stage('Promote to Production') {
+            when {
+                expression { params.DEPLOY_PROD }
+            }
+            steps {
+                timeout(time: 30, unit: 'MINUTES') {
+                    input message: "Deploy ${params.SERVICE_NAME} v${params.VERSION} to PRODUCTION?",
+                          ok: 'Approve Release',
+                          submitter: 'release-managers'
+                }
+                container('oc') {
+                    sh '''
+                        oc project ${OCP_NAMESPACE_PRD}
+                        oc set image deployment/${SERVICE_NAME} \
+                            ${SERVICE_NAME}=${IMAGE_TAG} \
+                            -n ${OCP_NAMESPACE_PRD}
+                        oc rollout status deployment/${SERVICE_NAME} \
+                            -n ${OCP_NAMESPACE_PRD} --timeout=10m
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            slackSend(channel: '#deployments', color: 'good',
+                      message: "PASSED: ${params.SERVICE_NAME} build #${env.BUILD_NUMBER} deployed to staging")
+        }
+        failure {
+            slackSend(channel: '#deployments', color: 'danger',
+                      message: "FAILED: ${params.SERVICE_NAME} build #${env.BUILD_NUMBER} — check Jenkins")
+        }
+        always {
+            cleanWs()
+        }
+    }
+}

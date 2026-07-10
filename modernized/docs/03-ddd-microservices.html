@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>DDD Microservices Identification &amp; Recommendation — PKS Auto Insurance</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;background:#ffffff;color:#1f2328;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h2{font-size:16px;font-weight:700;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px}
+p{margin-bottom:10px}
+.meta{color:#57606a;font-size:12px;margin-bottom:24px}
+.callout{background:#f7f8fa;border:1px solid #e5e7eb;border-left:4px solid #3b82d4;border-radius:6px;padding:14px 16px;margin-bottom:16px}
+.callout p{margin:0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#f7f8fa;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #e5e7eb}
+td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfc}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.badge-core{background:#fde8e8;color:#c0392b}
+.badge-support{background:#fef3cd;color:#856404}
+.badge-generic{background:#d4edda;color:#155724}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.bc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.bc-card{border-radius:8px;padding:14px;border:1px solid}
+.bc-1{background:#eff6ff;border-color:#bfdbfe}
+.bc-2{background:#f5f3ff;border-color:#ddd6fe}
+.bc-3{background:#fef9c3;border-color:#fde68a}
+.bc-4{background:#fff7ed;border-color:#fed7aa}
+.bc-5{background:#f0fdf4;border-color:#bbf7d0}
+.bc-card h3{margin-top:0;font-size:13px}
+.bc-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+code{font-family:"SF Mono",Menlo,monospace;font-size:12px;background:#f7f8fa;padding:1px 5px;border-radius:3px;border:1px solid #e5e7eb}
+ul{margin:6px 0 10px 20px}
+li{margin-bottom:3px}
+.method-get{color:#16a34a;font-weight:700}
+.method-post{color:#2563eb;font-weight:700}
+.method-put{color:#d97706;font-weight:700}
+.method-delete{color:#dc2626;font-weight:700}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#57606a;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>DDD Microservices Identification &amp; Recommendation — PKS Auto Insurance</h1>
+<p class="meta">Artifact ID: 03_ddd_microservices &nbsp;|&nbsp; Pattern: Domain-Driven Design &nbsp;|&nbsp; Author: IBM Bob</p>
+
+<!-- 1. Domain Discovery -->
+<h2>1. Domain Discovery &amp; Strategic Design</h2>
+<div class="callout">
+<p>Domain-Driven Design (DDD) was applied to identify natural business boundaries within the PKS Auto Insurance monolith. The domain model was analysed using Event Storming, yielding three domain types: Core, Supporting, and Generic.</p>
+</div>
+<table>
+<tr><th>Domain Type</th><th>Domain</th><th>Rationale</th><th>Investment</th></tr>
+<tr><td><span class="badge badge-core">Core Domain</span></td><td>Premium Calculation</td><td>Primary competitive differentiator — unique risk algorithm</td><td>Build in-house, highest investment</td></tr>
+<tr><td><span class="badge badge-core">Core Domain</span></td><td>Insurance Policy</td><td>Vehicle registration and quote binding drives revenue</td><td>Build in-house</td></tr>
+<tr><td><span class="badge badge-support">Supporting</span></td><td>Identity Management</td><td>Customer auth &amp; profile — important but not differentiating</td><td>Build, consider off-shelf later</td></tr>
+<tr><td><span class="badge badge-support">Supporting</span></td><td>Administration</td><td>Internal tooling for ops team</td><td>Lightweight build</td></tr>
+<tr><td><span class="badge badge-generic">Generic</span></td><td>API Gateway / Routing</td><td>Cross-cutting infrastructure concern</td><td>Use OSS (Spring Cloud Gateway)</td></tr>
+</table>
+
+<!-- 2. Bounded Contexts -->
+<h2>2. Identified Bounded Contexts</h2>
+<div class="bc-grid">
+<div class="bc-card bc-1">
+<div class="bc-label" style="color:#1e40af">BC-1 · Identity Context</div>
+<h3>user-service</h3>
+<p style="font-size:13px;margin-bottom:6px">Owns everything about a <strong>Customer</strong>: registration, authentication, profile management, role assignment, and credential lifecycle.</p>
+<p style="font-size:12px;color:#57606a">Aggregates: Customer, Credential, Role</p>
+</div>
+<div class="bc-card bc-2">
+<div class="bc-label" style="color:#6d28d9">BC-2 · Vehicle Context</div>
+<h3>vehicle-service</h3>
+<p style="font-size:13px;margin-bottom:6px">Owns the <strong>Vehicle</strong> aggregate — make, model, year, VIN — and its association to a customer reference (by ID only, no shared entity).</p>
+<p style="font-size:12px;color:#57606a">Aggregates: Vehicle, VehicleOwnership</p>
+</div>
+<div class="bc-card bc-3">
+<div class="bc-label" style="color:#92400e">BC-3 · Premium Context</div>
+<h3>premium-service</h3>
+<p style="font-size:13px;margin-bottom:6px">Owns the <strong>Quote</strong> aggregate and the premium calculation algorithm. Calls vehicle-service and user-service for data; never stores customer state.</p>
+<p style="font-size:12px;color:#57606a">Aggregates: Quote, RiskFactor</p>
+</div>
+</div>
+<div class="bc-card bc-5" style="margin-bottom:16px">
+<div class="bc-label" style="color:#14532d">BC-5 · Gateway Context</div>
+<h3>api-gateway</h3>
+<p style="font-size:13px;margin-bottom:6px">Generic routing, JWT validation, rate limiting, CORS, and request/response transformation. Does not own any business domain state.</p>
+<p style="font-size:12px;color:#57606a">Pattern: Open Host Service (OHS) — exposes unified API surface to frontend</p>
+</div>
+
+<!-- 3. Recommended Microservices -->
+<h2>3. Recommended Microservices</h2>
+<table>
+<tr><th>Service</th><th>Port</th><th>DB Schema</th><th>Responsibility</th><th>Build Tech</th></tr>
+<tr><td><strong>user-service</strong></td><td>8081</td><td><code>users_schema</code></td><td>Registration, login, JWT issuance, profile CRUD, role management</td><td>Spring Boot 3.x + Spring Security + JPA</td></tr>
+<tr><td><strong>vehicle-service</strong></td><td>8082</td><td><code>vehicles_schema</code></td><td>Vehicle CRUD, ownership tracking, VIN validation</td><td>Spring Boot 3.x + JPA</td></tr>
+<tr><td><strong>premium-service</strong></td><td>8083</td><td>Stateless (no schema)</td><td>Premium calculation via risk algorithm, quote generation</td><td>Spring Boot 3.x + RestClient</td></tr>
+<tr><td><strong>api-gateway</strong></td><td>8080</td><td>No DB</td><td>Route, auth-filter, rate-limit, CORS, load balance</td><td>Spring Cloud Gateway 4.x</td></tr>
+</table>
+
+<!-- 4. REST API Contracts -->
+<h2>4. REST API Contracts</h2>
+<h3>user-service API</h3>
+<table>
+<tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th></tr>
+<tr><td><span class="method-post">POST</span></td><td>/api/users/register</td><td>Create new customer account</td><td>None</td></tr>
+<tr><td><span class="method-post">POST</span></td><td>/api/users/login</td><td>Authenticate, return JWT</td><td>None</td></tr>
+<tr><td><span class="method-get">GET</span></td><td>/api/users/profile</td><td>Get own profile (from JWT sub)</td><td>Bearer JWT</td></tr>
+<tr><td><span class="method-put">PUT</span></td><td>/api/users/profile</td><td>Update own profile</td><td>Bearer JWT</td></tr>
+<tr><td><span class="method-get">GET</span></td><td>/api/users/all</td><td>List all users (admin use)</td><td>ROLE_ADMIN</td></tr>
+<tr><td><span class="method-delete">DELETE</span></td><td>/api/users/{email}</td><td>Remove user account (admin)</td><td>ROLE_ADMIN</td></tr>
+</table>
+<h3>vehicle-service API</h3>
+<table>
+<tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th></tr>
+<tr><td><span class="method-post">POST</span></td><td>/api/vehicles</td><td>Register a vehicle for caller's account</td><td>Bearer JWT</td></tr>
+<tr><td><span class="method-get">GET</span></td><td>/api/vehicles</td><td>List own vehicles</td><td>Bearer JWT</td></tr>
+<tr><td><span class="method-get">GET</span></td><td>/api/vehicles/{id}</td><td>Get vehicle detail by ID</td><td>Bearer JWT</td></tr>
+<tr><td><span class="method-delete">DELETE</span></td><td>/api/vehicles/{id}</td><td>Remove a vehicle</td><td>Bearer JWT</td></tr>
+</table>
+<h3>premium-service API</h3>
+<table>
+<tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th></tr>
+<tr><td><span class="method-post">POST</span></td><td>/api/premium/quote</td><td>Calculate premium given vehicleId + userEmail</td><td>Bearer JWT</td></tr>
+<tr><td><span class="method-get">GET</span></td><td>/api/premium/quote/{quoteId}</td><td>Retrieve a cached quote by ID</td><td>Bearer JWT</td></tr>
+</table>
+<table>
+<tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th></tr>
+</table>
+
+<!-- 5. Data Ownership -->
+<h2>5. Data Ownership Rules</h2>
+<div class="callout">
+<p>Each service is the <strong>single source of truth</strong> for its own data. Cross-service data needs are satisfied by REST API calls, never by shared database tables or cross-schema joins.</p>
+</div>
+<table>
+<tr><th>Data Entity</th><th>Owner Service</th><th>How Others Access It</th></tr>
+<tr><td>Customer / User</td><td>user-service</td><td>REST GET /api/users/profile with JWT</td></tr>
+<tr><td>Credentials / Roles</td><td>user-service</td><td>JWT claims (role embedded in token)</td></tr>
+<tr><td>Vehicle</td><td>vehicle-service</td><td>REST GET /api/vehicles/{id}</td></tr>
+<tr><td>Premium Quote</td><td>premium-service</td><td>REST GET /api/premium/quote/{id}</td></tr>
+</table>
+
+<!-- 6. Inter-Service Communication -->
+<h2>6. Inter-Service Communication</h2>
+<table>
+<tr><th>Caller</th><th>Called</th><th>Protocol</th><th>Pattern</th><th>Fallback</th></tr>
+<tr><td>api-gateway</td><td>user-service</td><td>HTTP/REST</td><td>Proxy routing + JWT validation filter</td><td>503 if down</td></tr>
+<tr><td>api-gateway</td><td>vehicle-service</td><td>HTTP/REST</td><td>Proxy routing</td><td>503 if down</td></tr>
+<tr><td>api-gateway</td><td>premium-service</td><td>HTTP/REST</td><td>Proxy routing</td><td>503 if down</td></tr>
+<tr><td>premium-service</td><td>vehicle-service</td><td>HTTP/REST</td><td>Synchronous + Circuit Breaker (Resilience4j)</td><td>Return cached/default rate</td></tr>
+<tr><td>premium-service</td><td>user-service</td><td>HTTP/REST</td><td>Synchronous + Circuit Breaker</td><td>Return cached/default rate</td></tr>
+</table>
+
+<!-- 7. Domain Events -->
+<h2>7. Domain Events</h2>
+<table>
+<tr><th>Event</th><th>Producer</th><th>Consumer(s)</th><th>Payload (key fields)</th></tr>
+<tr><td><code>CustomerRegistered</code></td><td>user-service</td><td>—</td><td>userId, email, registeredAt</td></tr>
+<tr><td><code>VehicleRegistered</code></td><td>vehicle-service</td><td>premium-service (cache invalidation)</td><td>vehicleId, ownerId, make, model, year</td></tr>
+<tr><td><code>QuoteGenerated</code></td><td>premium-service</td><td>user-service (notification)</td><td>quoteId, vehicleId, email, premium, generatedAt</td></tr>
+<tr><td><code>CustomerRemoved</code></td><td>user-service</td><td>vehicle-service (cascade delete)</td><td>userId, email, removedAt</td></tr>
+</table>
+<p style="color:#57606a;font-size:13px">Note: In the initial implementation, events are propagated via synchronous REST calls. An async message bus (Kafka/RabbitMQ) is recommended as a future enhancement for loose coupling.</p>
+
+<!-- 8. Decomposition Rationale -->
+<h2>8. Decomposition Rationale</h2>
+<table>
+<tr><th>Principle</th><th>How Applied</th></tr>
+<tr><td><strong>Single Responsibility</strong></td><td>Each service owns exactly one bounded context and one schema. No service handles two business domains.</td></tr>
+<tr><td><strong>Bounded Context Alignment</strong></td><td>Service boundaries match the DDD bounded contexts discovered during Event Storming.</td></tr>
+<tr><td><strong>Independent Deployability</strong></td><td>No compile-time dependencies between services. Deploy any service without affecting others.</td></tr>
+<tr><td><strong>Database per Service</strong></td><td>Each service owns its PostgreSQL schema. No cross-schema SQL joins. Schema migrations are per-service Flyway scripts.</td></tr>
+<tr><td><strong>API-First Design</strong></td><td>OpenAPI 3.0 contract defined before implementation. Frontend and gateway depend only on the contract.</td></tr>
+<tr><td><strong>Strangler Fig Pattern</strong></td><td>Monolith routes are migrated one by one to microservices behind the gateway; legacy app runs in parallel until full cutover.</td></tr>
+</table>
+
+<footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

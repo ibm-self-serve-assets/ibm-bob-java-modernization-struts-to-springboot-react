@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Unit Test Case Documentation — PKS Auto Insurance Microservices</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;background:#ffffff;color:#1f2328;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h2{font-size:16px;font-weight:700;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px}
+p{margin-bottom:10px}
+.meta{color:#57606a;font-size:12px;margin-bottom:24px}
+.callout{background:#f7f8fa;border:1px solid #e5e7eb;border-left:4px solid #3b82d4;border-radius:6px;padding:14px 16px;margin-bottom:16px}
+.callout p{margin:0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#f7f8fa;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #e5e7eb}
+td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfc}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.badge-pos{background:#d4edda;color:#155724}
+.badge-neg{background:#fde8e8;color:#c0392b}
+.badge-edge{background:#fef3cd;color:#856404}
+code{font-family:"SF Mono",Menlo,monospace;font-size:12px;background:#f7f8fa;padding:1px 5px;border-radius:3px;border:1px solid #e5e7eb}
+.tc-id{font-weight:700;color:#3b82d4;white-space:nowrap}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#57606a;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Unit Test Case Documentation — PKS Auto Insurance Microservices</h1>
+<p class="meta">Artifact ID: 07_unit_test_cases &nbsp;|&nbsp; Framework: JUnit 5 + Mockito + AssertJ &nbsp;|&nbsp; Author: IBM Bob</p>
+
+<div class="callout">
+<p>All unit tests use <strong>JUnit 5</strong> with <strong>Mockito</strong> for mocking dependencies and <strong>AssertJ</strong> for fluent assertions. Tests are isolated — no Spring context is loaded. Coverage targets are enforced via JaCoCo Maven plugin with a minimum of 80% line coverage per service.</p>
+</div>
+
+<!-- 1. UserServiceTest -->
+<h2>1. user-service — UserServiceTest</h2>
+<p style="color:#57606a;font-size:13px">Test class: <code>com.pks.userservice.service.UserServiceTest</code> &nbsp;|&nbsp; Mocks: <code>UserRepository</code>, <code>PasswordEncoder</code>, <code>JwtUtil</code></p>
+<table>
+<tr><th>ID</th><th>Method Under Test</th><th>Scenario</th><th>Input</th><th>Expected Result</th><th>Type</th></tr>
+<tr>
+  <td class="tc-id">UT-US-001</td>
+  <td><code>register()</code></td>
+  <td>Successful user registration</td>
+  <td>Valid RegisterRequest (all fields)</td>
+  <td>User saved; password BCrypt-encoded; returns UserResponse with id</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-US-002</td>
+  <td><code>register()</code></td>
+  <td>Duplicate email registration</td>
+  <td>Email already exists in repository</td>
+  <td>Throws <code>UserAlreadyExistsException</code></td>
+  <td><span class="badge badge-neg">Negative</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-US-003</td>
+  <td><code>login()</code></td>
+  <td>Successful login returns JWT</td>
+  <td>Correct email + password</td>
+  <td>Returns LoginResponse with non-null token; role = ROLE_USER</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-US-004</td>
+  <td><code>login()</code></td>
+  <td>Login with wrong password</td>
+  <td>Correct email, wrong password</td>
+  <td>Throws <code>BadCredentialsException</code></td>
+  <td><span class="badge badge-neg">Negative</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-US-005</td>
+  <td><code>login()</code></td>
+  <td>Login with non-existent email</td>
+  <td>Unknown email address</td>
+  <td>Throws <code>UsernameNotFoundException</code></td>
+  <td><span class="badge badge-neg">Negative</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-US-006</td>
+  <td><code>updateUser()</code></td>
+  <td>Update profile successfully</td>
+  <td>Valid email + UpdateRequest with new phone</td>
+  <td>Repository save called once; updated fields reflected in response</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-US-007</td>
+  <td><code>updateUser()</code></td>
+  <td>Update non-existent user</td>
+  <td>Unknown email</td>
+  <td>Throws <code>UserNotFoundException</code></td>
+  <td><span class="badge badge-neg">Negative</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-US-008</td>
+  <td><code>deleteUser()</code></td>
+  <td>Delete existing user</td>
+  <td>Valid email</td>
+  <td><code>UserRepository.deleteByEmail()</code> called; no exception</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-US-009</td>
+  <td><code>deleteUser()</code></td>
+  <td>Delete non-existent user</td>
+  <td>Unknown email</td>
+  <td>Throws <code>UserNotFoundException</code></td>
+  <td><span class="badge badge-neg">Negative</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-US-010</td>
+  <td><code>getAllUsers()</code></td>
+  <td>Returns list of all users</td>
+  <td>Repository returns 3 User entities</td>
+  <td>Returns List of 3 UserResponse DTOs; no password field in response</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+</table>
+
+<!-- 2. VehicleServiceTest -->
+<h2>2. vehicle-service — VehicleServiceTest</h2>
+<p style="color:#57606a;font-size:13px">Test class: <code>com.pks.vehicleservice.service.VehicleServiceTest</code> &nbsp;|&nbsp; Mocks: <code>VehicleRepository</code></p>
+<table>
+<tr><th>ID</th><th>Method Under Test</th><th>Scenario</th><th>Input</th><th>Expected Result</th><th>Type</th></tr>
+<tr>
+  <td class="tc-id">UT-VS-001</td>
+  <td><code>registerVehicle()</code></td>
+  <td>Successful vehicle registration</td>
+  <td>Valid VehicleRequest (make, model, year, VIN) + owner email</td>
+  <td>Vehicle saved; returns VehicleResponse with generated id</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-VS-002</td>
+  <td><code>registerVehicle()</code></td>
+  <td>Duplicate VIN rejected</td>
+  <td>VIN already exists in repository</td>
+  <td>Throws <code>DuplicateVinException</code></td>
+  <td><span class="badge badge-neg">Negative</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-VS-003</td>
+  <td><code>registerVehicle()</code></td>
+  <td>Invalid vehicle year (future)</td>
+  <td>year = currentYear + 2</td>
+  <td>Throws <code>InvalidVehicleException</code></td>
+  <td><span class="badge badge-edge">Edge</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-VS-004</td>
+  <td><code>getVehiclesByEmail()</code></td>
+  <td>Returns vehicles for known owner</td>
+  <td>Email with 2 vehicles in repository</td>
+  <td>Returns List of 2 VehicleResponse DTOs</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-VS-005</td>
+  <td><code>getVehiclesByEmail()</code></td>
+  <td>Owner with no vehicles</td>
+  <td>Email with no vehicles in repository</td>
+  <td>Returns empty List; no exception</td>
+  <td><span class="badge badge-edge">Edge</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-VS-006</td>
+  <td><code>deleteVehicle()</code></td>
+  <td>Delete vehicle owned by caller</td>
+  <td>Valid vehicleId + matching ownerEmail</td>
+  <td><code>VehicleRepository.deleteById()</code> called; returns 204</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+</table>
+
+<!-- 3. PremiumServiceTest -->
+<h2>3. premium-service — PremiumServiceTest</h2>
+<p style="color:#57606a;font-size:13px">Test class: <code>com.pks.premiumservice.service.PremiumServiceTest</code> &nbsp;|&nbsp; Mocks: <code>VehicleServiceClient</code>, <code>UserServiceClient</code></p>
+<table>
+<tr><th>ID</th><th>Method Under Test</th><th>Scenario</th><th>Input</th><th>Expected Result</th><th>Type</th></tr>
+<tr>
+  <td class="tc-id">UT-PS-001</td>
+  <td><code>calculatePremium()</code></td>
+  <td>Standard adult, mid-age vehicle</td>
+  <td>age=35, vehicle year=2018 (not luxury)</td>
+  <td>Premium = $500 base; no surcharges applied</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-PS-002</td>
+  <td><code>calculatePremium()</code></td>
+  <td>Young driver surcharge applied</td>
+  <td>age=22, vehicle year=2020</td>
+  <td>Premium = $700 ($500 base + $200 young driver)</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-PS-003</td>
+  <td><code>calculatePremium()</code></td>
+  <td>Senior driver surcharge applied</td>
+  <td>age=70, vehicle year=2019</td>
+  <td>Premium = $650 ($500 base + $150 senior)</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-PS-004</td>
+  <td><code>calculatePremium()</code></td>
+  <td>Old vehicle surcharge applied</td>
+  <td>age=40, vehicle year=2010 (>10 years old)</td>
+  <td>Premium = $600 ($500 base + $100 old vehicle)</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-PS-005</td>
+  <td><code>calculatePremium()</code></td>
+  <td>Multiple surcharges — young driver + old car</td>
+  <td>age=23, vehicle year=2008</td>
+  <td>Premium = $800 ($500 + $200 young + $100 old car)</td>
+  <td><span class="badge badge-edge">Edge</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-PS-006</td>
+  <td><code>calculatePremium()</code></td>
+  <td>Vehicle service unavailable (circuit open)</td>
+  <td>VehicleServiceClient throws <code>ServiceUnavailableException</code></td>
+  <td>Returns fallback premium response; does not propagate exception</td>
+  <td><span class="badge badge-neg">Negative</span></td>
+</tr>
+</table>
+
+<!-- 4. JwtUtil Tests -->
+<h2>4. JwtUtil — JwtUtilTest</h2>
+<p style="color:#57606a;font-size:13px">Test class: <code>com.pks.userservice.security.JwtUtilTest</code> &nbsp;|&nbsp; No mocks (pure unit test)</p>
+<table>
+<tr><th>ID</th><th>Method Under Test</th><th>Scenario</th><th>Input</th><th>Expected Result</th><th>Type</th></tr>
+<tr>
+  <td class="tc-id">UT-JWT-001</td>
+  <td><code>generateToken()</code></td>
+  <td>Token generated for valid user</td>
+  <td>UserDetails: email=test@test.com, role=ROLE_USER</td>
+  <td>Returns non-null JWT string; 3 parts separated by dots</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-JWT-002</td>
+  <td><code>extractEmail()</code></td>
+  <td>Extract subject from valid token</td>
+  <td>Valid JWT token for test@test.com</td>
+  <td>Returns "test@test.com"</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-JWT-003</td>
+  <td><code>extractRole()</code></td>
+  <td>Extract role claim from token</td>
+  <td>Token with claim role=ROLE_ADMIN</td>
+  <td>Returns "ROLE_ADMIN"</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-JWT-004</td>
+  <td><code>isTokenValid()</code></td>
+  <td>Valid non-expired token passes</td>
+  <td>Freshly generated token</td>
+  <td>Returns true</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-JWT-005</td>
+  <td><code>isTokenValid()</code></td>
+  <td>Expired token rejected</td>
+  <td>Token with expiry set to past timestamp</td>
+  <td>Throws <code>ExpiredJwtException</code></td>
+  <td><span class="badge badge-neg">Negative</span></td>
+</tr>
+<tr>
+  <td class="tc-id">UT-JWT-006</td>
+  <td><code>isTokenValid()</code></td>
+  <td>Tampered token signature rejected</td>
+  <td>Valid token with last char modified</td>
+  <td>Throws <code>SignatureException</code></td>
+  <td><span class="badge badge-neg">Negative</span></td>
+</tr>
+</table>
+
+<!-- 5. Coverage Targets -->
+<h2>5. Test Coverage Targets</h2>
+<table>
+<tr><th>Service</th><th>Test Class</th><th>Test Count</th><th>Coverage Target</th><th>JaCoCo Rule</th></tr>
+<tr><td>user-service</td><td>UserServiceTest</td><td>10</td><td>≥ 90%</td><td>COVEREDRATIO 0.90</td></tr>
+<tr><td>user-service</td><td>JwtUtilTest</td><td>6</td><td>100%</td><td>COVEREDRATIO 1.0</td></tr>
+<tr><td>user-service</td><td>UserControllerTest (MockMvc)</td><td>6</td><td>≥ 85%</td><td>COVEREDRATIO 0.85</td></tr>
+<tr><td>vehicle-service</td><td>VehicleServiceTest</td><td>6</td><td>≥ 85%</td><td>COVEREDRATIO 0.85</td></tr>
+<tr><td>vehicle-service</td><td>VehicleControllerTest (MockMvc)</td><td>5</td><td>≥ 80%</td><td>COVEREDRATIO 0.80</td></tr>
+<tr><td>premium-service</td><td>PremiumServiceTest</td><td>6</td><td>≥ 95%</td><td>COVEREDRATIO 0.95</td></tr>
+<tr><td>premium-service</td><td>PremiumCalculatorTest</td><td>8</td><td>100%</td><td>COVEREDRATIO 1.0</td></tr>
+</table>
+
+<footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

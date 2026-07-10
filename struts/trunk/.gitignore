@@ -1,0 +1,17 @@
+*.class
+
+.classpath
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+#Logs
+logs/*
+target/*
+/target
+mydb/*
+
+#Folder to ignore
+.settings

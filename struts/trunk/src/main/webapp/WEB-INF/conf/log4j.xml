@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<!-- ===================================================================== -->
+<!-- -->
+<!-- Log4j Configuration -->
+<!-- -->
+<!-- ===================================================================== -->
+
+<!-- $Id: log4j.xml 65459 2007-09-19 00:25:51Z sonipks@gmail.com $ -->
+
+<!-- | For more configuration infromation and examples see the Jakarta Log4j 
+	| owebsite: http://jakarta.apache.org/log4j -->
+
+
+<log4j:configuration xmlns:log4j='http://jakarta.apache.org/log4j/'>
+
+	<!-- ============================== -->
+	<!-- Append messages to the console -->
+	<!-- ============================== -->
+
+	<appender name="ROOT_CONSOLE" class="org.apache.log4j.ConsoleAppender">
+		<param name="Threshold" value="ERROR" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%5p] %m %c:%M:%L %n" />
+		</layout>
+	</appender>
+
+	<!-- ================================= -->
+	<!-- Preserve messages in a local file -->
+	<!-- ================================= -->
+
+	<!-- A date based rolling appender -->
+	<appender name="ROOT_ERROR" class="org.apache.log4j.DailyRollingFileAppender">
+		<param name="Threshold" value="ERROR" />
+		<param name="File" value="F:/pankaj/auto-insurance/trunk/logs/root_error.log" />
+
+		<!-- Rollover at midnight each day -->
+		<param name="DatePattern" value="'.'yyyy-MM-dd" />
+
+		<!-- Rollover at the top of each hour <param name="DatePattern" value="'.'yyyy-MM-dd-HH"/> -->
+
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%c:%M:%L %5p %m %d{hh:mm} %n" />
+		</layout>
+	</appender>
+
+	<!-- A debug based rolling file handler -->
+	<appender name="ROOT_DEBUG" class="org.apache.log4j.RollingFileAppender">
+		<param name="Threshold" value="DEBUG" />
+		<param name="File" value="F:/pankaj/auto-insurance/trunk/logs/root_debug.log" />
+		<param name="MaxFileSize" value="100kb" />
+		<param name="MaxBackupIndex" value="100" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%5p] %c:%M:%L %m %d [%t] %n" />
+
+			<!-- The default pattern: Date Priority [Category] (Thread) Message\n 
+				<param name="ConversionPattern" value="%d %-5p [%c] (%t) %m%n"/> -->
+
+			<!-- The full pattern: Date MS Priority [Category] (Thread:NDC) Message\n 
+				<param name="ConversionPattern" value="%d %-5r %-5p [%c] (%t:%x) %m%n"/> -->
+		</layout>
+	</appender>
+
+	<!-- ================================= -->
+	<!-- Hibernate Logging Configuration   -->
+	<!-- ================================= -->
+
+	<!-- A hibernate debug based rolling file handler -->
+	<appender name="HIBERNATE_DEBUG" class="org.apache.log4j.RollingFileAppender">
+		<param name="Threshold" value="INFO" />
+		<param name="File" value="F:/pankaj/auto-insurance/trunk/logs/hb_debug.log" />
+		<param name="MaxFileSize" value="100kb" />
+		<param name="MaxBackupIndex" value="10" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%5p] %c:%M:%L %m %d [%t] %n" />
+		</layout>
+	</appender>
+
+	<!-- A hibernate error based rolling file handler -->
+	<appender name="HIBERNATE_ERROR" class="org.apache.log4j.RollingFileAppender">
+		<param name="Threshold" value="ERROR" />
+		<param name="File" value="F:/pankaj/auto-insurance/trunk/logs/hb_error.log" />
+		<param name="MaxFileSize" value="100kb" />
+		<param name="MaxBackupIndex" value="10" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%5p] %c:%M:%L %m %d [%t] %n" />
+		</layout>
+	</appender>
+	<!-- A hibernate error based rolling file handler -->
+	<appender name="HIBERNATE_SQL" class="org.apache.log4j.RollingFileAppender">
+		<param name="Threshold" value="INFO" />
+		<param name="File" value="F:/pankaj/auto-insurance/trunk/logs/hb_sql.log" />
+		<param name="MaxFileSize" value="100kb" />
+		<param name="MaxBackupIndex" value="10" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%5p] %c:%M:%L %m %d [%t] %n" />
+		</layout>
+	</appender>
+	<!-- A hibernate error based rolling file handler -->
+	<appender name="HIBERNATE_TYPE" class="org.apache.log4j.RollingFileAppender">
+		<param name="Threshold" value="INFO" />
+		<param name="File" value="F:/pankaj/auto-insurance/trunk/logs/hb_type.log" />
+		<param name="MaxFileSize" value="100kb" />
+		<param name="MaxBackupIndex" value="10" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%5p] %c:%M:%L %m %d [%t] %n" />
+		</layout>
+	</appender>
+	<!-- A hibernate error based rolling file handler -->
+	<appender name="HIBERNATE_HBM2DDL" class="org.apache.log4j.RollingFileAppender">
+		<param name="Threshold" value="INFO" />
+		<param name="File" value="F:/pankaj/auto-insurance/trunk/logs/hb_hbm2ddl.log" />
+		<param name="MaxFileSize" value="100kb" />
+		<param name="MaxBackupIndex" value="10" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%5p] %c:%M:%L %m %d [%t] %n" />
+		</layout>
+	</appender>
+	<!-- A hibernate error based rolling file handler -->
+	<appender name="HIBERNATE_PRETTY" class="org.apache.log4j.RollingFileAppender">
+		<param name="Threshold" value="INFO" />
+		<param name="File" value="F:/pankaj/auto-insurance/trunk/logs/hb_pretty.log" />
+		<param name="MaxFileSize" value="100kb" />
+		<param name="MaxBackupIndex" value="10" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%5p] %c:%M:%L %m %d [%t] %n" />
+		</layout>
+	</appender>
+	<!-- A hibernate error based rolling file handler -->
+	<appender name="HIBERNATE_CACHE" class="org.apache.log4j.RollingFileAppender">
+		<param name="Threshold" value="INFO" />
+		<param name="File" value="F:/pankaj/auto-insurance/trunk/logs/hb_cache.log" />
+		<param name="MaxFileSize" value="100kb" />
+		<param name="MaxBackupIndex" value="10" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%5p] %c:%M:%L %m %d [%t] %n" />
+		</layout>
+	</appender>
+	<!-- A hibernate error based rolling file handler -->
+	<appender name="HIBERNATE_TRANSACTION" class="org.apache.log4j.RollingFileAppender">
+		<param name="Threshold" value="INFO" />
+		<param name="File" value="F:/pankaj/auto-insurance/trunk/logs/hb_transaction.log" />
+		<param name="MaxFileSize" value="100kb" />
+		<param name="MaxBackupIndex" value="10" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%5p] %c:%M:%L %m %d [%t] %n" />
+		</layout>
+	</appender>
+	<!-- A hibernate error based rolling file handler -->
+	<appender name="HIBERNATE_JDBC" class="org.apache.log4j.RollingFileAppender">
+		<param name="Threshold" value="INFO" />
+		<param name="File" value="F:/pankaj/auto-insurance/trunk/logs/hb_jdbc.log" />
+		<param name="MaxFileSize" value="100kb" />
+		<param name="MaxBackupIndex" value="10" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%5p] %c:%M:%L %m %d [%t] %n" />
+		</layout>
+	</appender>
+	<!-- A hibernate error based rolling file handler -->
+	<appender name="HIBERNATE_AST" class="org.apache.log4j.RollingFileAppender">
+		<param name="Threshold" value="INFO" />
+		<param name="File" value="F:/pankaj/auto-insurance/trunk/logs/hb_ast.log" />
+		<param name="MaxFileSize" value="100kb" />
+		<param name="MaxBackupIndex" value="10" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%5p] %c:%M:%L %m %d [%t] %n" />
+		</layout>
+	</appender>
+	<!-- A hibernate error based rolling file handler -->
+	<appender name="HIBERNATE_SECURE" class="org.apache.log4j.RollingFileAppender">
+		<param name="Threshold" value="INFO" />
+		<param name="File" value="F:/pankaj/auto-insurance/trunk/logs/hb_secure.log" />
+		<param name="MaxFileSize" value="100kb" />
+		<param name="MaxBackupIndex" value="10" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%5p] %c:%M:%L %m %d [%t] %n" />
+		</layout>
+	</appender>
+
+	<!-- Limit the com.pks.insurance category to INFO as its DEBUG is verbose -->
+	<category name="com.pks.insurance">
+		<priority value="INFO" />
+		<appender-ref ref="ROOT_DEBUG" />
+	</category>
+
+	<!-- Limit the org.hibernate category to INFO as its DEBUG is verbose <category 
+		name="org.hibernate"> <priority value="DEBUG" /> <appender-ref ref="HIBERNATE_DEBUG" 
+		/> </category> -->
+
+	<!-- for DML statement as they are executed -->
+	<category name="org.hibernate.SQL">
+		<priority value="DEBUG" />
+		<appender-ref ref="HIBERNATE_DEBUG" />
+		<appender-ref ref="HIBERNATE_SQL" />
+	</category>
+
+	<!-- JDBC parameters -->
+	<category name="org.hibernate.type">
+		<priority value="INFO" />
+		<appender-ref ref="HIBERNATE_DEBUG" />
+		<appender-ref ref="HIBERNATE_TYPE" />
+	</category>
+
+	<!-- all DDL statement as they are executed -->
+	<category name="org.hibernate.tool.hbm2ddl">
+		<priority value="INFO" />
+		<appender-ref ref="HIBERNATE_DEBUG" />
+		<appender-ref ref="HIBERNATE_HBM2DDL" />
+	</category>
+
+	<!-- log state of all entities(max 20) associated with the session at flush 
+		time -->
+	<category name="org.hibernate.pretty">
+		<priority value="INFO" />
+		<appender-ref ref="HIBERNATE_DEBUG" />
+		<appender-ref ref="HIBERNATE_PRETTY" />
+	</category>
+
+	<!-- 2nd level cache activity -->
+	<category name="org.hibernate.cache">
+		<priority value="INFO" />
+		<appender-ref ref="HIBERNATE_DEBUG" />
+		<appender-ref ref="HIBERNATE_CACHE" />
+	</category>
+
+	<!-- all transaction related activity -->
+	<category name="org.hibernate.transaction">
+		<priority value="INFO" />
+		<appender-ref ref="HIBERNATE_DEBUG" />
+		<appender-ref ref="HIBERNATE_TRANSACTION" />
+	</category>
+
+	<!-- all JDBC resource acquisition -->
+	<category name="org.hibernate.jdbc">
+		<priority value="INFO" />
+		<appender-ref ref="HIBERNATE_DEBUG" />
+		<appender-ref ref="HIBERNATE_JDBC" />
+	</category>
+
+	<!-- HQL & SQL ASTs during query parsing -->
+	<category name="org.hibernate.hql.ast.AST">
+		<priority value="INFO" />
+		<appender-ref ref="HIBERNATE_DEBUG" />
+		<appender-ref ref="HIBERNATE_AST" />
+	</category>
+
+	<!-- JAAS authorization requests -->
+	<category name="org.hibernate.secure">
+		<priority value="INFO" />
+		<appender-ref ref="HIBERNATE_DEBUG" />
+		<appender-ref ref="HIBERNATE_SECURE" />
+	</category>
+
+
+	<!-- ======================= -->
+	<!-- Setup the Root category -->
+	<!-- ======================= -->
+
+	<root>
+		<level value="INFO" />
+		<appender-ref ref="ROOT_CONSOLE" />
+		<appender-ref ref="ROOT_ERROR" />
+		<appender-ref ref="ROOT_DEBUG" />
+	</root>
+</log4j:configuration>

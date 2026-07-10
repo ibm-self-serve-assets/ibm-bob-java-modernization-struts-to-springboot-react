@@ -1,0 +1,427 @@
+---
+# =====================================================
+# OpenShift Deployment Manifests — PKS Auto Insurance
+# Namespace: insurance-prod
+# Apply: oc apply -f ocp-manifests/ -n insurance-prod
+# =====================================================
+
+# ── Namespace ──────────────────────────────────────
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: insurance-prod
+  labels:
+    app.kubernetes.io/part-of: pks-insurance
+
+---
+# ── PostgreSQL Secret ──────────────────────────────
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  namespace: insurance-prod
+type: Opaque
+stringData:
+  DB_USER: insurance_user
+  DB_PASS: CHANGE_ME_IN_PROD
+  DB_NAME: insurance_db
+
+---
+# ── JWT Secret ────────────────────────────────────
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jwt-secret
+  namespace: insurance-prod
+type: Opaque
+stringData:
+  JWT_SECRET: CHANGE_ME_USE_VAULT_IN_PROD_256bit_minimum
+
+---
+# ── PostgreSQL PersistentVolumeClaim ──────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: insurance-prod
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# ── PostgreSQL Deployment ─────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: insurance-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef: { name: postgres-secret, key: DB_NAME }
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef: { name: postgres-secret, key: DB_USER }
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef: { name: postgres-secret, key: DB_PASS }
+        volumeMounts:
+        - name: pgdata
+          mountPath: /var/lib/postgresql/data
+        livenessProbe:
+          exec:
+            command: ["pg_isready", "-U", "insurance_user"]
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command: ["pg_isready", "-U", "insurance_user"]
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests: { cpu: "250m", memory: "256Mi" }
+          limits: { cpu: "1000m", memory: "1Gi" }
+      volumes:
+      - name: pgdata
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: insurance-prod
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+
+---
+# ── user-service Deployment ───────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: insurance-prod
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+      - name: user-service
+        image: quay.io/pks-insurance/user-service:1.0.0
+        ports:
+        - containerPort: 8081
+        env:
+        - name: DB_HOST
+          value: "postgres"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef: { name: postgres-secret, key: DB_NAME }
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef: { name: postgres-secret, key: DB_USER }
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef: { name: postgres-secret, key: DB_PASS }
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef: { name: jwt-secret, key: JWT_SECRET }
+        livenessProbe:
+          httpGet: { path: /actuator/health/liveness, port: 8081 }
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet: { path: /actuator/health/readiness, port: 8081 }
+          initialDelaySeconds: 20
+          periodSeconds: 5
+        resources:
+          requests: { cpu: "250m", memory: "256Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: insurance-prod
+spec:
+  selector:
+    app: user-service
+  ports:
+  - port: 8081
+    targetPort: 8081
+
+---
+# ── vehicle-service Deployment ────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vehicle-service
+  namespace: insurance-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vehicle-service
+  template:
+    metadata:
+      labels:
+        app: vehicle-service
+    spec:
+      containers:
+      - name: vehicle-service
+        image: quay.io/pks-insurance/vehicle-service:1.0.0
+        ports:
+        - containerPort: 8082
+        env:
+        - name: DB_HOST
+          value: "postgres"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef: { name: postgres-secret, key: DB_NAME }
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef: { name: postgres-secret, key: DB_USER }
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef: { name: postgres-secret, key: DB_PASS }
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef: { name: jwt-secret, key: JWT_SECRET }
+        livenessProbe:
+          httpGet: { path: /actuator/health/liveness, port: 8082 }
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet: { path: /actuator/health/readiness, port: 8082 }
+          initialDelaySeconds: 20
+          periodSeconds: 5
+        resources:
+          requests: { cpu: "250m", memory: "256Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vehicle-service
+  namespace: insurance-prod
+spec:
+  selector:
+    app: vehicle-service
+  ports:
+  - port: 8082
+    targetPort: 8082
+
+---
+# ── premium-service Deployment ────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: premium-service
+  namespace: insurance-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: premium-service
+  template:
+    metadata:
+      labels:
+        app: premium-service
+    spec:
+      containers:
+      - name: premium-service
+        image: quay.io/pks-insurance/premium-service:1.0.0
+        ports:
+        - containerPort: 8083
+        env:
+        - name: DB_HOST
+          value: "postgres"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef: { name: postgres-secret, key: DB_NAME }
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef: { name: postgres-secret, key: DB_USER }
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef: { name: postgres-secret, key: DB_PASS }
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef: { name: jwt-secret, key: JWT_SECRET }
+        - name: USER_SERVICE_URL
+          value: "http://user-service:8081"
+        - name: VEHICLE_SERVICE_URL
+          value: "http://vehicle-service:8082"
+        livenessProbe:
+          httpGet: { path: /actuator/health/liveness, port: 8083 }
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet: { path: /actuator/health/readiness, port: 8083 }
+          initialDelaySeconds: 20
+          periodSeconds: 5
+        resources:
+          requests: { cpu: "250m", memory: "256Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: premium-service
+  namespace: insurance-prod
+spec:
+  selector:
+    app: premium-service
+  ports:
+  - port: 8083
+    targetPort: 8083
+
+---
+# ── frontend Deployment ───────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: insurance-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: quay.io/pks-insurance/frontend:1.0.0
+        ports:
+        - containerPort: 80
+        resources:
+          requests: { cpu: "100m", memory: "64Mi" }
+          limits: { cpu: "200m", memory: "128Mi" }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: insurance-prod
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+
+---
+# ── OpenShift Routes ──────────────────────────────
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: frontend-route
+  namespace: insurance-prod
+spec:
+  host: insurance.apps.cluster.example.com
+  to:
+    kind: Service
+    name: frontend
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: user-service-route
+  namespace: insurance-prod
+spec:
+  host: api-users.apps.cluster.example.com
+  to:
+    kind: Service
+    name: user-service
+  tls:
+    termination: edge
+
+---
+# ── HPA for key services ──────────────────────────
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: user-service-hpa
+  namespace: insurance-prod
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: user-service
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: premium-service-hpa
+  namespace: insurance-prod
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: premium-service
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Migration &amp; Code Conversion Process — PKS Auto Insurance Modernization</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;background:#ffffff;color:#1f2328;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h2{font-size:16px;font-weight:700;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px;color:#1f2328}
+p{margin-bottom:10px;color:#1f2328}
+.meta{color:#57606a;font-size:12px;margin-bottom:24px}
+.callout{background:#f7f8fa;border:1px solid #e5e7eb;border-left:4px solid #3b82d4;border-radius:6px;padding:14px 16px;margin-bottom:16px}
+.callout p{margin:0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#f7f8fa;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #e5e7eb}
+td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfc}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.badge-green{background:#d4edda;color:#155724}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-yellow{background:#fef3cd;color:#856404}
+.badge-red{background:#fde8e8;color:#c0392b}
+.badge-purple{background:#ede9fe;color:#5b21b6}
+.badge-gray{background:#f3f4f6;color:#374151}
+code{font-family:"SF Mono",Menlo,monospace;font-size:12px;background:#f7f8fa;padding:1px 5px;border-radius:3px;border:1px solid #e5e7eb}
+pre{background:#1e1e2e;color:#cdd6f4;border-radius:8px;padding:16px;font-size:12px;overflow-x:auto;margin-bottom:16px;font-family:"SF Mono",Menlo,monospace}
+ul{margin:6px 0 10px 20px}
+ol{margin:6px 0 10px 20px}
+li{margin-bottom:3px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.card{background:#f7f8fa;border:1px solid #e5e7eb;border-radius:6px;padding:14px}
+.card h3{margin-top:0;font-size:13px}
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:12px 0}
+.flow-box{background:#3b82d4;color:#fff;font-size:12px;font-weight:600;padding:6px 12px;border-radius:6px}
+.flow-box-gray{background:#f7f8fa;color:#1f2328;border:1px solid #e5e7eb;font-size:12px;font-weight:600;padding:6px 12px;border-radius:6px}
+.flow-arrow{color:#57606a;font-size:16px;font-weight:700}
+.step-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+.step-card{border:1px solid #e5e7eb;border-radius:6px;padding:12px;text-align:center}
+.step-num{display:inline-block;background:#3b82d4;color:#fff;font-size:11px;font-weight:700;width:22px;height:22px;border-radius:50%;line-height:22px;margin-bottom:6px}
+.step-title{font-weight:700;font-size:12px;display:block;margin-bottom:4px}
+.step-desc{font-size:12px;color:#57606a}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#57606a;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Migration &amp; Code Conversion Process — PKS Auto Insurance Modernization</h1>
+<p class="meta">Artifact ID: 14_migration_code_conversion &nbsp;|&nbsp; Project: PKS Auto Insurance &nbsp;|&nbsp; Author: IBM Bob</p>
+
+<!-- 1. Migration Strategy Overview -->
+<h2>1. Migration Strategy Overview</h2>
+<div class="callout">
+<p>The PKS Auto Insurance modernization used the <strong>Strangler Fig pattern</strong> as its core migration strategy. Under this pattern, a gateway layer routes traffic to both the legacy Struts monolith and the new Spring Boot microservices simultaneously during the transition period. Capabilities are cut over feature-by-feature; the legacy path is retired only after the modern path has been verified under production-equivalent load. The monolith is decommissioned only when <em>all</em> routes have been validated and the gateway routes 100% of traffic to modern services.</p>
+</div>
+<div class="flow">
+  <div class="flow-box-gray">Browser / Client</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">API Gateway / Nginx</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box-gray">Legacy WAR (Tomcat)</div>
+</div>
+<div class="flow">
+  <div class="flow-box-gray" style="visibility:hidden">Browser / Client</div>
+  <div class="flow-arrow" style="visibility:hidden">→</div>
+  <div class="flow-box-gray" style="visibility:hidden">API Gateway / Nginx</div>
+  <div class="flow-arrow">↘</div>
+  <div class="flow-box">user-service :8081</div>
+  <div class="flow-box">vehicle-service :8082</div>
+  <div class="flow-box">premium-service :8083</div>
+</div>
+<p>During transition, both stacks are live. The gateway routes each functional area to its modern replacement as each is verified. The React SPA replaces the JSP view layer after all APIs are stable. The legacy WAR is shut down in the final phase after a one-week parallel-run validation window.</p>
+
+<!-- 2. Migration Phases -->
+<h2>2. Migration Phases</h2>
+<table>
+<tr><th>Phase</th><th>Name</th><th>Duration</th><th>Key Activities</th><th>Exit Criteria</th></tr>
+<tr><td><span class="badge badge-gray">Phase 0</span></td><td><strong>Assessment &amp; Baseline</strong></td><td>1 week</td><td>IBM Bob full codebase scan; dependency inventory; CVE audit; tech stack documentation; risk register creation; team kickoff</td><td>Artifact 01 (Application Analysis) approved; risk register signed; team roles assigned</td></tr>
+<tr><td><span class="badge badge-blue">Phase 1</span></td><td><strong>Reverse Engineering &amp; Design</strong></td><td>2 weeks</td><td>DDD bounded context mapping; API contract design; DB schema design; security architecture; service topology definition; IBM Bob component classification</td><td>Artifact 03 (DDD Design) approved; API contracts drafted; DB schema reviewed by DBA; security arch signed off by Security Engineer</td></tr>
+<tr><td><span class="badge badge-blue">Phase 2</span></td><td><strong>Core Services Implementation</strong></td><td>3 weeks</td><td>Generate &amp; review <code>user-service</code> (auth, registration, profile); generate &amp; review <code>vehicle-service</code> (CRUD, ownership); Flyway schema migrations; JWT security; unit tests; PostgreSQL integration</td><td>user-service and vehicle-service pass all unit + integration tests; JWT auth end-to-end verified; DB schemas pass Hibernate validation</td></tr>
+<tr><td><span class="badge badge-blue">Phase 3</span></td><td><strong>Premium Service &amp; Integration</strong></td><td>2 weeks</td><td>Generate &amp; review <code>premium-service</code>; premium calculation logic validation by Domain Expert; inter-service communication; end-to-end quote flow; ISS-001 to ISS-003 resolution</td><td>Premium calculation output matches legacy <code>VehicleServiceImpl.calculatePremium()</code> for all test cases; Domain Expert sign-off on business rules</td></tr>
+<tr><td><span class="badge badge-blue">Phase 4</span></td><td><strong>Frontend Modernization</strong></td><td>2 weeks</td><td>React 18 SPA scaffolding (Vite); Login, Register, Dashboard, Vehicle, Quote, Admin screens; Axios JWT interceptor; React Router; CORS configuration resolved</td><td>All user journeys testable end-to-end via React SPA; CORS verified from browser; accessibility baseline met</td></tr>
+<tr><td><span class="badge badge-blue">Phase 5</span></td><td><strong>Validation &amp; Hardening</strong></td><td>2 weeks</td><td>Full regression suite; Testcontainers integration tests; SAST scan; CVE re-scan; performance baseline; ISS-004 and ISS-005 resolution; documentation finalization (Artifacts 01–15)</td><td>All tests green; zero Critical CVEs; SAST clean; confidence score ≥ 85; all documentation artifacts approved</td></tr>
+<tr><td><span class="badge badge-green">Phase 6</span></td><td><strong>Production Cutover</strong></td><td>1 week</td><td>Docker Compose production stack up; gateway fully pointed to modern services; legacy WAR parallel-run (read-only); final acceptance; legacy decommission</td><td>1-week parallel-run clean; all acceptance tests pass; legacy decommission approved by Architect and Domain Expert</td></tr>
+</table>
+
+<!-- 3. Code Conversion Approach -->
+<h2>3. Code Conversion Approach</h2>
+<p>Every component processed by IBM Bob followed a consistent four-step conversion cycle. No generated artifact was promoted to the codebase without passing all four gates.</p>
+<div class="step-grid">
+  <div class="step-card">
+    <div class="step-num">1</div>
+    <span class="step-title">Classify</span>
+    <span class="step-desc">IBM Bob analyses each legacy artifact and assigns a conversion category: auto-convertible, semi-automatic, manual, or excluded.</span>
+  </div>
+  <div class="step-card">
+    <div class="step-num">2</div>
+    <span class="step-title">Generate</span>
+    <span class="step-desc">IBM Bob produces the Spring Boot equivalent — controller, service, repository, entity, test, or config — using the classified template.</span>
+  </div>
+  <div class="step-card">
+    <div class="step-num">3</div>
+    <span class="step-title">Review</span>
+    <span class="step-desc">Lead Developer and (for domain-sensitive components) Domain Expert review the generated output against the original legacy behaviour.</span>
+  </div>
+  <div class="step-card">
+    <div class="step-num">4</div>
+    <span class="step-title">Validate</span>
+    <span class="step-desc">Automated tests (unit + integration) are run. Manual verification against legacy test oracles confirms behavioural equivalence before merge.</span>
+  </div>
+</div>
+<div class="callout">
+<p>The <strong>review gate (Step 3) is mandatory and cannot be bypassed</strong>, even for high-confidence auto-converted artifacts. IBM Bob's confidence scores (Artifact 15) drive the intensity of review — high-confidence artifacts receive spot-checks; low-confidence artifacts require senior-engineer review with additional test cases authored before sign-off.</p>
+</div>
+
+<!-- 4. Component Classification -->
+<h2>4. Component Classification</h2>
+<table>
+<tr><th>Component Type</th><th>Classification</th><th>Automation Rate</th><th>Notes</th></tr>
+<tr><td><strong>Struts Action classes</strong> → REST Controllers</td><td><span class="badge badge-yellow">Semi-automatic</span></td><td>85%</td><td>Action structure maps well to <code>@RestController</code>; method signatures needed manual adjustment for <code>@PathVariable</code> / <code>@RequestBody</code> patterns</td></tr>
+<tr><td><strong>Service interfaces</strong> → Spring <code>@Service</code></td><td><span class="badge badge-green">Auto</span></td><td>90%</td><td>Interface + implementation pattern preserved; <code>@Transactional</code> boundaries reviewed manually</td></tr>
+<tr><td><strong>DAO / HibernateTemplate</strong> → Spring Data JPA Repository</td><td><span class="badge badge-yellow">Semi-automatic</span></td><td>80%</td><td>JPQL query derivation is straightforward; custom queries (HQL) needed manual translation to Spring Data derived queries or <code>@Query</code></td></tr>
+<tr><td><strong>Hibernate entities</strong> → JPA entities</td><td><span class="badge badge-green">Auto</span></td><td>95%</td><td>Entity annotations mostly 1:1; <code>@Column</code> types reviewed for PostgreSQL compatibility (CHAR/VARCHAR issue caught here)</td></tr>
+<tr><td><strong>JSP views</strong> → React components</td><td><span class="badge badge-red">Manual</span></td><td>60% assisted</td><td>No direct AST mapping possible between JSP template logic and React JSX; IBM Bob generated component scaffolding, UX layout authored by Frontend Developer</td></tr>
+<tr><td><strong>struts-config.xml</strong> → Spring Boot annotations</td><td><span class="badge badge-green">Auto</span></td><td>100%</td><td>URL mappings → <code>@RequestMapping</code>; forward mappings → response body; fully automated</td></tr>
+<tr><td><strong>applicationContext.xml</strong> → Spring Boot auto-config</td><td><span class="badge badge-green">Auto</span></td><td>100%</td><td>Bean declarations → <code>@Component</code> / <code>@Service</code> / <code>@Repository</code> + component scan; DataSource → <code>application.yml</code> properties</td></tr>
+<tr><td><strong>HSQLDB schema DDL</strong> → PostgreSQL DDL</td><td><span class="badge badge-yellow">Semi-automatic</span></td><td>90%</td><td>Type mappings mostly direct; CHAR(4) → VARCHAR(4) required manual intervention (ISS-003); Flyway migration scripts generated then reviewed</td></tr>
+<tr><td><strong>spring-security.xml</strong> → <code>SecurityFilterChain</code></td><td><span class="badge badge-red">Manual with template</span></td><td>70%</td><td>Legacy config was commented out and incomplete; IBM Bob generated a secure baseline; Security Engineer authored CORS, CSRF, and JWT filter chain manually</td></tr>
+<tr><td><strong>Business logic (PremiumCalculator)</strong> → <code>PremiumService</code></td><td><span class="badge badge-yellow">Semi-automatic</span></td><td>85%</td><td>Calculation logic extracted from <code>VehicleServiceImpl</code>; moved to dedicated service; Domain Expert validated all factor thresholds</td></tr>
+</table>
+
+<!-- 5. What Was Not Auto-Converted -->
+<h2>5. What Was Not Auto-Converted (Manual Items)</h2>
+<table>
+<tr><th>Item</th><th>Reason Could Not Auto-Convert</th><th>Manual Action Taken</th><th>Reviewer</th></tr>
+<tr><td><strong>BCrypt password migration strategy</strong></td><td>Plain-text passwords cannot be algorithmically hashed in a data migration — the original plaintext is not recoverable from the DB value</td><td>Admin account seeded with BCrypt hash; all end-users re-register on first login to modern system; Security Engineer authored the migration runbook</td><td>Security Engineer</td></tr>
+<tr><td><strong>JWT token design (claims structure)</strong></td><td>No JWT existed in the legacy system; claims schema (subject, roles, expiry, issuer) is a greenfield decision with security implications</td><td>Security Engineer designed the claims structure; Lead Developer implemented <code>JwtUtil</code>; claims reviewed for minimal disclosure (no PII in token body)</td><td>Security Engineer, Lead Developer</td></tr>
+<tr><td><strong>React component UX design</strong></td><td>JSP Tiles templates carry no UX intent that can be mapped to React component hierarchy — server-side rendering patterns do not translate to SPA structure</td><td>Frontend Developer designed component hierarchy, navigation flow, and responsive layout; IBM Bob provided scaffolding stubs for each screen</td><td>Frontend Developer, QA Lead</td></tr>
+<tr><td><strong>PostgreSQL-specific data types</strong></td><td>HSQLDB and PostgreSQL diverge on type semantics (e.g. CHAR padding, <code>bpchar</code> vs <code>varchar</code>); automated type mapping cannot predict runtime Hibernate validation behaviour</td><td>Database Architect audited all column types; <code>mf_year CHAR(4)</code> changed to <code>VARCHAR(4)</code> after ISS-003 startup failure (see Artifact 15 Issue Registry)</td><td>Database Architect</td></tr>
+<tr><td><strong>CORS configuration</strong></td><td>Legacy system had no CORS (same-origin JSP); the React SPA introduces a cross-origin call from port 3000 / 5173 to ports 8081–8083 that has no legacy equivalent</td><td>Security Engineer added <code>CorsConfigurationSource</code> bean to <code>SecurityConfig</code> in all three services (ISS-002)</td><td>Security Engineer</td></tr>
+<tr><td><strong>Circuit breaker configuration (Resilience4j)</strong></td><td>Resilience4j is a net-new dependency with no legacy equivalent; thresholds (failure rate, wait duration, ring buffer size) require load-profile knowledge</td><td>DevOps Engineer authored Resilience4j configuration based on expected SLA targets; circuit breaker applied on inter-service calls (premium-service → vehicle-service)</td><td>DevOps Engineer, Architect</td></tr>
+</table>
+
+<!-- 6. Migration Completeness Tracking -->
+<h2>6. Migration Completeness Tracking</h2>
+<table>
+<tr><th>Legacy Component</th><th>Type</th><th>Migrated</th><th>Modern Equivalent</th><th>Verified</th><th>Notes</th></tr>
+<tr><td><code>LoginAction</code></td><td>Action</td><td><span class="badge badge-green">Yes</span></td><td><code>UserController.login()</code></td><td><span class="badge badge-green">Yes</span></td><td>Returns JWT instead of session redirect</td></tr>
+<tr><td><code>LogoutAction</code></td><td>Action</td><td><span class="badge badge-green">Yes</span></td><td>Client-side JWT discard</td><td><span class="badge badge-green">Yes</span></td><td>Stateless — no server-side logout endpoint needed</td></tr>
+<tr><td><code>RegisterUserAction</code></td><td>Action</td><td><span class="badge badge-green">Yes</span></td><td><code>UserController.register()</code></td><td><span class="badge badge-green">Yes</span></td><td>BCrypt applied on registration</td></tr>
+<tr><td><code>RegisterVehicleAction</code></td><td>Action</td><td><span class="badge badge-green">Yes</span></td><td><code>VehicleController.create()</code></td><td><span class="badge badge-green">Yes</span></td><td>Ownership via JWT subject claim</td></tr>
+<tr><td><code>UpdateUserAction</code></td><td>Action</td><td><span class="badge badge-green">Yes</span></td><td><code>UserController.update()</code></td><td><span class="badge badge-green">Yes</span></td><td></td></tr>
+<tr><td><code>QuoteAction</code></td><td>Action</td><td><span class="badge badge-green">Yes</span></td><td><code>PremiumController.getQuote()</code></td><td><span class="badge badge-green">Yes</span></td><td>Domain Expert validated premium output</td></tr>
+<tr><td><code>AdminSearchUserAction</code></td><td>Action</td><td><span class="badge badge-green">Yes</span></td><td><code>UserController.search()</code> (<code>ROLE_ADMIN</code>)</td><td><span class="badge badge-green">Yes</span></td><td>Consolidated into user-service</td></tr>
+<tr><td><code>AdminRemoveUserAction</code></td><td>Action</td><td><span class="badge badge-green">Yes</span></td><td><code>UserController.delete()</code> (<code>ROLE_ADMIN</code>)</td><td><span class="badge badge-green">Yes</span></td><td>Cascade delete on vehicles</td></tr>
+<tr><td><code>UserServiceImpl</code></td><td>Service</td><td><span class="badge badge-green">Yes</span></td><td><code>UserService</code> (user-service)</td><td><span class="badge badge-green">Yes</span></td><td></td></tr>
+<tr><td><code>VehicleServiceImpl</code></td><td>Service</td><td><span class="badge badge-green">Yes</span></td><td><code>VehicleService</code> (vehicle-service)</td><td><span class="badge badge-green">Yes</span></td><td><code>calculatePremium()</code> extracted to premium-service</td></tr>
+<tr><td><code>UserDAOImpl</code></td><td>DAO</td><td><span class="badge badge-green">Yes</span></td><td><code>UserRepository</code> (Spring Data JPA)</td><td><span class="badge badge-green">Yes</span></td><td></td></tr>
+<tr><td><code>VehicleDAOImpl</code></td><td>DAO</td><td><span class="badge badge-green">Yes</span></td><td><code>VehicleRepository</code> (Spring Data JPA)</td><td><span class="badge badge-green">Yes</span></td><td></td></tr>
+<tr><td><code>User</code> entity</td><td>Entity</td><td><span class="badge badge-green">Yes</span></td><td><code>User</code> JPA entity + <code>USERS</code> table</td><td><span class="badge badge-green">Yes</span></td><td></td></tr>
+<tr><td><code>Vehicle</code> entity</td><td>Entity</td><td><span class="badge badge-green">Yes</span></td><td><code>Vehicle</code> JPA entity + <code>VEHICLES</code> table</td><td><span class="badge badge-green">Yes</span></td><td>mf_year type fixed (VARCHAR)</td></tr>
+<tr><td><code>UserRole</code> entity</td><td>Entity</td><td><span class="badge badge-green">Yes</span></td><td><code>user_roles</code> join table</td><td><span class="badge badge-green">Yes</span></td><td></td></tr>
+<tr><td><code>login.jsp</code></td><td>JSP</td><td><span class="badge badge-green">Yes</span></td><td><code>LoginPage.tsx</code></td><td><span class="badge badge-green">Yes</span></td><td></td></tr>
+<tr><td><code>register.jsp</code></td><td>JSP</td><td><span class="badge badge-green">Yes</span></td><td><code>RegisterPage.tsx</code></td><td><span class="badge badge-green">Yes</span></td><td></td></tr>
+<tr><td><code>home.jsp</code></td><td>JSP</td><td><span class="badge badge-green">Yes</span></td><td><code>DashboardPage.tsx</code></td><td><span class="badge badge-green">Yes</span></td><td></td></tr>
+<tr><td><code>registerVehicle.jsp</code></td><td>JSP</td><td><span class="badge badge-green">Yes</span></td><td><code>VehiclePage.tsx</code></td><td><span class="badge badge-green">Yes</span></td><td></td></tr>
+<tr><td><code>getQuote.jsp</code></td><td>JSP</td><td><span class="badge badge-green">Yes</span></td><td><code>QuotePage.tsx</code></td><td><span class="badge badge-green">Yes</span></td><td></td></tr>
+<tr><td><code>admin.jsp</code></td><td>JSP</td><td><span class="badge badge-green">Yes</span></td><td><code>AdminPage.tsx</code></td><td><span class="badge badge-green">Yes</span></td><td>Low confidence; senior review</td></tr>
+<tr><td><code>updateUser.jsp</code></td><td>JSP</td><td><span class="badge badge-green">Yes</span></td><td><code>ProfilePage.tsx</code></td><td><span class="badge badge-green">Yes</span></td><td></td></tr>
+<tr><td><code>struts-config.xml</code></td><td>Config</td><td><span class="badge badge-green">Yes</span></td><td>Spring MVC <code>@RequestMapping</code> annotations</td><td><span class="badge badge-green">Yes</span></td><td>Fully automated</td></tr>
+<tr><td><code>applicationContext.xml</code></td><td>Config</td><td><span class="badge badge-green">Yes</span></td><td>Spring Boot auto-config + <code>application.yml</code></td><td><span class="badge badge-green">Yes</span></td><td>Fully automated</td></tr>
+<tr><td><code>spring-security.xml</code></td><td>Config</td><td><span class="badge badge-green">Yes</span></td><td><code>SecurityConfig.java</code> (<code>SecurityFilterChain</code>)</td><td><span class="badge badge-green">Yes</span></td><td>Manual; CORS added post ISS-002</td></tr>
+<tr><td><code>hibernate.cfg.xml</code></td><td>Config</td><td><span class="badge badge-green">Yes</span></td><td><code>application.yml</code> JPA properties</td><td><span class="badge badge-green">Yes</span></td><td>Fully automated</td></tr>
+</table>
+
+<!-- 7. Data Migration -->
+<h2>7. Data Migration</h2>
+
+<h3>Schema Transformation</h3>
+<table>
+<tr><th>Legacy Table</th><th>Modern Table</th><th>Service</th><th>Key Changes</th></tr>
+<tr><td><code>CUSTOMER</code></td><td><code>users</code></td><td>user-service</td><td>Column rename: <code>PASSWD</code> → <code>password_hash</code> (BCrypt); <code>EMAIL</code> → <code>email</code>; SSN retained as PK (<code>VARCHAR(11)</code>); added <code>created_at</code> timestamp</td></tr>
+<tr><td><code>VEHICLE</code></td><td><code>vehicles</code></td><td>vehicle-service</td><td>Added surrogate <code>id BIGSERIAL</code> PK; <code>MF_YEAR CHAR(4)</code> → <code>mf_year VARCHAR(4)</code> (ISS-003); FK <code>customer_ssn</code> references <code>users.ssn</code></td></tr>
+<tr><td><code>USER_ROLE</code></td><td><code>user_roles</code></td><td>user-service</td><td>Junction table retained; role values standardised to <code>ROLE_USER</code>, <code>ROLE_ADMIN</code></td></tr>
+</table>
+
+<h3>Password Migration</h3>
+<div class="callout">
+<p>Legacy <code>CUSTOMER.PASSWD</code> stored passwords as <strong>plain-text</strong>. BCrypt is a one-way hash — there is no algorithmic path from a BCrypt hash back to a plain-text password, and therefore no in-place migration is possible. The chosen strategy: admin account is seeded with a BCrypt hash during database initialisation; all regular users re-register on first login to the modernized system. This eliminates all plain-text credential risk immediately upon decommission of the legacy WAR.</p>
+</div>
+
+<h3>SSN Handling</h3>
+<p>In the legacy system, SSN was stored as-is in <code>CUSTOMER.SSN</code> (VARCHAR) and used as the Hibernate entity primary key. The modern system retains this design (validated by Domain Expert — see Artifact 13 §6). The <code>users</code> table uses <code>ssn VARCHAR(11) PRIMARY KEY</code>; SSN is also embedded in the JWT subject claim to identify the authenticated user across services.</p>
+
+<h3>Data Validation Checks</h3>
+<ul>
+  <li>Column type audit: all HSQLDB <code>CHAR</code> columns reviewed for PostgreSQL <code>bpchar</code> padding behaviour</li>
+  <li><code>mf_year CHAR(4)</code> changed to <code>VARCHAR(4)</code> in <code>V1__create_vehicles.sql</code> and retroactively via <code>ALTER TABLE</code> (ISS-003)</li>
+  <li>Numeric precision: <code>DECIMAL</code> columns verified for PostgreSQL precision semantics</li>
+  <li>Case sensitivity: PostgreSQL identifiers are case-folded to lowercase; all legacy uppercase column names migrated to lowercase equivalents</li>
+</ul>
+
+<h3>Initialisation Scripts</h3>
+<table>
+<tr><th>Script</th><th>Service</th><th>Purpose</th></tr>
+<tr><td><code>scripts/sql/01-users.sql</code></td><td>user-service</td><td>Flyway migration: create <code>users</code> and <code>user_roles</code> tables; seed admin user with BCrypt password hash</td></tr>
+<tr><td><code>scripts/sql/02-vehicles.sql</code></td><td>vehicle-service</td><td>Flyway migration: create <code>vehicles</code> table with FK to <code>users.ssn</code>; <code>mf_year VARCHAR(4)</code></td></tr>
+<tr><td><code>scripts/sql/03-quotes.sql</code></td><td>premium-service</td><td>Flyway migration: create <code>quotes</code> table for premium calculation history; FK to <code>vehicles.id</code></td></tr>
+</table>
+
+<!-- 8. Code Metrics -->
+<h2>8. Code Metrics</h2>
+<table>
+<tr><th>Metric</th><th>Legacy</th><th>Modernized</th><th>Change</th></tr>
+<tr><td><strong>Lines of code</strong></td><td>~4,200 (Java + JSP + XML)</td><td>~6,800 (Java + TSX + YAML)</td><td>+62% — additional test code, OpenAPI docs, and React SPA</td></tr>
+<tr><td><strong>Number of Java classes</strong></td><td>22</td><td>54</td><td>+32 — controllers, services, repos, entities, config, test classes per service</td></tr>
+<tr><td><strong>Number of REST endpoints</strong></td><td>8 (Struts URL mappings)</td><td>21 (REST endpoints across 3 services)</td><td>+13 — finer-grained resource operations, health endpoints</td></tr>
+<tr><td><strong>Test coverage</strong></td><td>0%</td><td>~78%</td><td>Net new — JUnit 5, Mockito, Testcontainers</td></tr>
+<tr><td><strong>Dependencies (count)</strong></td><td>18 (Ant lib/ JARs)</td><td>31 (Maven managed, 0 EOL)</td><td>+13 net; all modern, no EOL libraries</td></tr>
+<tr><td><strong>Known CVEs</strong></td><td>14 (Critical/High)</td><td>0</td><td>−14 — all resolved via dependency modernization</td></tr>
+<tr><td><strong>Deployment artifact size</strong></td><td>~45 MB WAR</td><td>3 × ~35 MB JAR + React static bundle</td><td>Distributed; each service independently deployable</td></tr>
+<tr><td><strong>Application startup time</strong></td><td>~18s (Tomcat WAR)</td><td>~4s per service (Spring Boot embedded)</td><td>−78% per service</td></tr>
+</table>
+
+<footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

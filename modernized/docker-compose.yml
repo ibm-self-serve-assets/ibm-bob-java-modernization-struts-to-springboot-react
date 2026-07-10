@@ -1,0 +1,90 @@
+version: '3.9'
+
+services:
+  # ── PostgreSQL ─────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: insurance-postgres
+    environment:
+      POSTGRES_DB: insurance_db
+      POSTGRES_USER: insurance_user
+      POSTGRES_PASSWORD: insurance_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U insurance_user -d insurance_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── user-service ────────────────────────────────────────────────
+  user-service:
+    build: ./user-service
+    container_name: insurance-user-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: insurance_db
+      DB_USER: insurance_user
+      DB_PASS: insurance_pass
+      JWT_SECRET: pksInsuranceSecretKey2024ChangeInProduction!
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8081/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── vehicle-service ─────────────────────────────────────────────
+  vehicle-service:
+    build: ./vehicle-service
+    container_name: insurance-vehicle-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: insurance_db
+      DB_USER: insurance_user
+      DB_PASS: insurance_pass
+      JWT_SECRET: pksInsuranceSecretKey2024ChangeInProduction!
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── premium-service ─────────────────────────────────────────────
+  premium-service:
+    build: ./premium-service
+    container_name: insurance-premium-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: insurance_db
+      DB_USER: insurance_user
+      DB_PASS: insurance_pass
+      JWT_SECRET: pksInsuranceSecretKey2024ChangeInProduction!
+      USER_SERVICE_URL: http://user-service:8081
+      VEHICLE_SERVICE_URL: http://vehicle-service:8082
+    ports:
+      - "8083:8083"
+    depends_on:
+      user-service:
+        condition: service_healthy
+
+  # ── React frontend ───────────────────────────────────────────────
+  frontend:
+    build: ./frontend
+    container_name: insurance-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - premium-service
+
+volumes:
+  postgres-data:

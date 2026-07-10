@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Local Mac Development Setup Guide — PKS Auto Insurance Modernized</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;background:#ffffff;color:#1f2328;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h2{font-size:16px;font-weight:700;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px}
+p{margin-bottom:10px}
+.meta{color:#57606a;font-size:12px;margin-bottom:24px}
+.callout{background:#f7f8fa;border:1px solid #e5e7eb;border-left:4px solid #3b82d4;border-radius:6px;padding:14px 16px;margin-bottom:16px}
+.callout p{margin:0;margin-bottom:4px}
+.callout p:last-child{margin-bottom:0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#f7f8fa;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #e5e7eb}
+td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfc}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.badge-req{background:#dbeafe;color:#1e40af}
+.badge-opt{background:#f3e8ff;color:#7e22ce}
+pre{background:#1e1e2e;color:#cdd6f4;border-radius:8px;padding:16px;font-size:12px;overflow-x:auto;margin-bottom:14px;font-family:"SF Mono",Menlo,Consolas,monospace;line-height:1.6}
+pre .comment{color:#6c7086}
+pre .keyword{color:#cba6f7}
+pre .string{color:#a6e3a1}
+pre .cmd{color:#89dceb}
+pre .var{color:#fab387}
+code{font-family:"SF Mono",Menlo,monospace;font-size:12px;background:#f7f8fa;padding:1px 5px;border-radius:3px;border:1px solid #e5e7eb}
+ol.steps{margin:8px 0 12px 0;list-style:none;counter-reset:step}
+ol.steps li{counter-increment:step;padding:10px 14px 10px 44px;position:relative;background:#f7f8fa;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:6px}
+ol.steps li::before{content:counter(step);position:absolute;left:14px;top:10px;width:20px;height:20px;background:#3b82d4;color:#fff;border-radius:50%;font-size:11px;font-weight:700;text-align:center;line-height:20px}
+ul{margin:6px 0 10px 20px}
+li{margin-bottom:3px}
+.url-box{background:#f7f8fa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 14px;font-family:"SF Mono",Menlo,monospace;font-size:12px;margin-bottom:10px}
+.url-box div{margin-bottom:4px}
+.url-box div:last-child{margin-bottom:0}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#57606a;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Local Mac Development Setup Guide — PKS Auto Insurance Modernized</h1>
+<p class="meta">Artifact ID: 10_local_mac_setup &nbsp;|&nbsp; Platform: macOS (Intel &amp; Apple Silicon) &nbsp;|&nbsp; Author: IBM Bob</p>
+
+<!-- 1. Prerequisites -->
+<h2>1. Prerequisites</h2>
+<div class="callout">
+<p>All tools can be installed via <strong>Homebrew</strong>. Install Homebrew first if not present:</p>
+<p><code>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</code></p>
+</div>
+<table>
+<tr><th>Tool</th><th>Version</th><th>Purpose</th><th>Install Command</th><th>Required</th></tr>
+<tr><td>Homebrew</td><td>Latest</td><td>Package manager</td><td>See callout above</td><td><span class="badge badge-req">Required</span></td></tr>
+<tr><td>Java 21 (Temurin)</td><td>21 LTS</td><td>Run Spring Boot services</td><td><code>brew install --cask temurin@21</code></td><td><span class="badge badge-req">Required</span></td></tr>
+<tr><td>Maven</td><td>3.9.x</td><td>Build Java microservices</td><td><code>brew install maven</code></td><td><span class="badge badge-req">Required</span></td></tr>
+<tr><td>Node.js</td><td>20 LTS</td><td>Run React frontend</td><td><code>brew install node@20</code></td><td><span class="badge badge-req">Required</span></td></tr>
+<tr><td>Docker Desktop</td><td>Latest</td><td>Run PostgreSQL + all services</td><td><code>brew install --cask docker</code></td><td><span class="badge badge-req">Required</span></td></tr>
+<tr><td>PostgreSQL Client</td><td>15.x</td><td>Connect to DB from terminal</td><td><code>brew install libpq &amp;&amp; brew link --force libpq</code></td><td><span class="badge badge-req">Required</span></td></tr>
+<tr><td>Git</td><td>Latest</td><td>Version control</td><td><code>brew install git</code></td><td><span class="badge badge-req">Required</span></td></tr>
+<tr><td>Python 3</td><td>3.11+</td><td>DB migration transform script</td><td><code>brew install python@3.11</code></td><td><span class="badge badge-opt">Optional</span></td></tr>
+</table>
+<h3>Verify Installations</h3>
+<pre><span class="cmd">java</span> <span class="string">--version</span>        <span class="comment"># Should show: openjdk 21.x.x</span>
+<span class="cmd">mvn</span> <span class="string">--version</span>         <span class="comment"># Should show: Apache Maven 3.9.x</span>
+<span class="cmd">node</span> <span class="string">--version</span>        <span class="comment"># Should show: v20.x.x</span>
+<span class="cmd">docker</span> <span class="string">--version</span>      <span class="comment"># Should show: Docker version 24.x.x</span>
+<span class="cmd">psql</span> <span class="string">--version</span>        <span class="comment"># Should show: psql (PostgreSQL) 15.x</span></pre>
+
+<!-- 2. Quick Start via Docker Compose -->
+<h2>2. Quick Start via Docker Compose</h2>
+<div class="callout">
+<p>The fastest way to run the entire platform locally. All services, the database, and the frontend start in one command.</p>
+</div>
+<ol class="steps">
+<li>
+  <strong>Clone the repository</strong>
+  <pre><span class="cmd">git</span> <span class="string">clone https://github.com/your-org/pks-auto-insurance.git</span>
+<span class="cmd">cd</span> pks-auto-insurance</pre>
+</li>
+<li>
+  <strong>Build all Maven projects</strong>
+  <pre><span class="cmd">mvn</span> clean package <span class="string">-DskipTests</span> <span class="string">--file</span> user-service/pom.xml
+<span class="cmd">mvn</span> clean package <span class="string">-DskipTests</span> <span class="string">--file</span> vehicle-service/pom.xml
+<span class="cmd">mvn</span> clean package <span class="string">-DskipTests</span> <span class="string">--file</span> premium-service/pom.xml
+</li>
+<li>
+  <strong>Start all services with Docker Compose</strong>
+  <pre><span class="cmd">docker</span> compose up <span class="string">-d</span>
+<span class="comment"># Starts: postgres, user-service, vehicle-service,</span>
+<span class="comment">#         premium-service, api-gateway, frontend</span></pre>
+</li>
+<li>
+  <strong>Verify all containers are healthy</strong>
+  <pre><span class="cmd">docker</span> compose ps
+<span class="comment"># All services should show STATUS: healthy</span>
+<span class="comment"># Allow ~30 seconds for Spring Boot startup</span></pre>
+</li>
+<li>
+  <strong>Access the application</strong>
+  <div class="url-box">
+  <div>🌐 <strong>Frontend:</strong> <code>http://localhost:3000</code></div>
+  <div>🔌 <strong>API Gateway:</strong> <code>http://localhost:8080</code></div>
+  <div>👤 <strong>user-service health:</strong> <code>http://localhost:8081/actuator/health</code></div>
+  <div>🚗 <strong>vehicle-service health:</strong> <code>http://localhost:8082/actuator/health</code></div>
+  <div>💰 <strong>premium-service health:</strong> <code>http://localhost:8083/actuator/health</code></div>
+  </div>
+</li>
+</ol>
+
+<!-- 3. Manual Development Setup -->
+<h2>3. Manual Development Setup</h2>
+<h3>3a. Start PostgreSQL (Docker)</h3>
+<pre><span class="cmd">docker</span> run <span class="string">-d</span> \
+  <span class="string">--name</span> pks-postgres \
+  <span class="string">-e</span> POSTGRES_USER=pksadmin \
+  <span class="string">-e</span> POSTGRES_PASSWORD=pkspassword \
+  <span class="string">-e</span> POSTGRES_DB=pksdb \
+  <span class="string">-p</span> 5432:5432 \
+  postgres:15-alpine</pre>
+
+<h3>3b. Initialise Database Schema</h3>
+<pre><span class="comment"># Run once before starting any service. Safe to re-run.</span>
+<span class="cmd">cd</span> modernized
+<span class="cmd">./scripts/init-db.sh</span>
+
+<span class="comment"># Override defaults if needed:</span>
+<span class="cmd">DB_HOST</span>=localhost <span class="cmd">DB_PASSWORD</span>=pkspassword <span class="cmd">./scripts/init-db.sh</span></pre>
+
+<h3>3c. Run user-service Locally</h3>
+<pre><span class="cmd">cd</span> user-service
+<span class="cmd">mvn</span> spring-boot:run \
+  <span class="string">-Dspring-boot.run.arguments</span>=<span class="string">"--DB_HOST=localhost --DB_PORT=5432 --DB_NAME=pksdb --DB_USER=pksadmin --DB_PASSWORD=pkspassword --JWT_SECRET=local-dev-secret-minimum-32-chars"</span></pre>
+
+<h3>3d. Run vehicle-service Locally</h3>
+<pre><span class="cmd">cd</span> vehicle-service
+<span class="cmd">mvn</span> spring-boot:run \
+  <span class="string">-Dspring-boot.run.arguments</span>=<span class="string">"--DB_HOST=localhost --DB_PORT=5432 --DB_NAME=pksdb --DB_USER=pksadmin --DB_PASSWORD=pkspassword --JWT_SECRET=local-dev-secret-minimum-32-chars"</span></pre>
+
+<h3>3e. Run premium-service Locally</h3>
+<pre><span class="cmd">cd</span> premium-service
+<span class="cmd">mvn</span> spring-boot:run \
+  <span class="string">-Dspring-boot.run.arguments</span>=<span class="string">"--JWT_SECRET=local-dev-secret-minimum-32-chars --VEHICLE_SERVICE_URL=http://localhost:8082 --USER_SERVICE_URL=http://localhost:8081"</span></pre>
+
+<h3>3f. Run React Frontend</h3>
+<pre><span class="cmd">cd</span> frontend
+<span class="cmd">npm</span> install
+<span class="cmd">npm</span> run dev
+<span class="comment"># Frontend starts at http://localhost:3000</span>
+<span class="comment"># Proxies API calls to http://localhost:8080 (api-gateway)</span></pre>
+
+<!-- 4. Testing the API Manually -->
+<h2>4. Testing the API Manually</h2>
+<h3>Register a new user</h3>
+<pre><span class="cmd">curl</span> <span class="string">-X POST</span> http://localhost:8081/api/users/register \
+  <span class="string">-H</span> <span class="string">"Content-Type: application/json"</span> \
+  <span class="string">-d</span> <span class="string">'{
+    "firstName": "Jane",
+    "lastName":  "Doe",
+    "email":     "jane.doe@example.com",
+    "password":  "SecurePass123!",
+    "dateOfBirth": "1990-05-15",
+    "address":   "123 Main St",
+    "city":      "Chicago",
+    "state":     "IL",
+    "zip":       "60601",
+    "phone":     "312-555-0101"
+  }'</span></pre>
+
+<h3>Login and capture JWT token</h3>
+<pre><span class="var">TOKEN</span>=$(curl <span class="string">-s -X POST</span> http://localhost:8081/api/users/login \
+  <span class="string">-H</span> <span class="string">"Content-Type: application/json"</span> \
+  <span class="string">-d</span> <span class="string">'{"email":"jane.doe@example.com","password":"SecurePass123!"}'</span> \
+  | python3 <span class="string">-c</span> <span class="string">"import sys,json; print(json.load(sys.stdin)['token'])"</span>)
+<span class="cmd">echo</span> <span class="string">"JWT: $TOKEN"</span></pre>
+
+<h3>Register a vehicle</h3>
+<pre><span class="cmd">curl</span> <span class="string">-X POST</span> http://localhost:8082/api/vehicles \
+  <span class="string">-H</span> <span class="string">"Authorization: Bearer $TOKEN"</span> \
+  <span class="string">-H</span> <span class="string">"Content-Type: application/json"</span> \
+  <span class="string">-d</span> <span class="string">'{"make":"Toyota","model":"Camry","year":2021,"vin":"1HGCM82633A004352","color":"Blue"}'</span></pre>
+
+<h3>Get a premium quote</h3>
+<pre><span class="cmd">curl</span> <span class="string">-X POST</span> http://localhost:8083/api/premium/quote \
+  <span class="string">-H</span> <span class="string">"Authorization: Bearer $TOKEN"</span> \
+  <span class="string">-H</span> <span class="string">"Content-Type: application/json"</span> \
+  <span class="string">-d</span> <span class="string">'{"vehicleId": 1, "userEmail": "jane.doe@example.com"}'</span></pre>
+
+<!-- 5. Running Tests -->
+<h2>5. Running Tests Locally</h2>
+<h3>Unit Tests (all services)</h3>
+<pre><span class="comment"># Run unit tests for a specific service</span>
+<span class="cmd">mvn</span> test <span class="string">-f</span> user-service/pom.xml
+
+<span class="comment"># Run all services' unit tests from monorepo root</span>
+<span class="keyword">for</span> svc in user-service vehicle-service premium-service; <span class="keyword">do</span>
+  <span class="cmd">echo</span> <span class="string">"=== Testing $svc ==="</span>
+  <span class="cmd">mvn</span> test <span class="string">-f</span> $svc/pom.xml
+<span class="keyword">done</span></pre>
+
+<h3>Integration Tests (requires Docker for Testcontainers)</h3>
+<pre><span class="comment"># Testcontainers will automatically pull and start postgres:15-alpine</span>
+<span class="comment"># Ensure Docker Desktop is running!</span>
+<span class="cmd">mvn</span> verify <span class="string">-f</span> user-service/pom.xml <span class="string">-Pfailsafe</span>
+<span class="cmd">mvn</span> verify <span class="string">-f</span> vehicle-service/pom.xml <span class="string">-Pfailsafe</span></pre>
+
+<h3>Frontend Tests</h3>
+<pre><span class="cmd">cd</span> frontend
+<span class="cmd">npm</span> test           <span class="comment"># Jest unit tests</span>
+<span class="cmd">npm</span> run test:e2e   <span class="comment"># Playwright e2e tests (requires running backend)</span></pre>
+
+<!-- 6. Troubleshooting -->
+<h2>6. Troubleshooting</h2>
+<table>
+<tr><th>Problem</th><th>Symptom</th><th>Solution</th></tr>
+<tr><td>Port in use</td><td><code>Address already in use :8081</code></td><td>Run <code>lsof -i :8081</code> and kill the process; or change port in <code>application.yml</code></td></tr>
+<tr><td>PostgreSQL not starting</td><td>Container exits immediately</td><td>Check <code>docker logs pks-postgres</code>; ensure port 5432 is free; remove old volume: <code>docker volume rm pks-postgres-data</code></td></tr>
+<tr><td>Schema already exists</td><td><code>relation "users" already exists</code></td><td><code>init-db.sh</code> uses <code>IF NOT EXISTS</code> — safe to re-run; or drop tables manually and re-run</td></tr>
+<tr><td>JWT errors</td><td><code>SignatureException</code> or 401 on all requests</td><td>Ensure all services use the same <code>JWT_SECRET</code> value (≥32 chars)</td></tr>
+<tr><td>premium-service can't reach vehicle-service</td><td><code>Connection refused localhost:8082</code></td><td>Ensure vehicle-service is running; verify <code>VEHICLE_SERVICE_URL</code> env var is set correctly</td></tr>
+<tr><td>Apple Silicon Docker issues</td><td><code>no matching manifest for linux/arm64</code></td><td>Add <code>platform: linux/amd64</code> in docker-compose.yml for images without ARM builds, or use Rosetta 2: enable in Docker Desktop → Settings → Features</td></tr>
+<tr><td>React CORS errors</td><td><code>CORS policy: No 'Access-Control-Allow-Origin'</code></td><td>Ensure frontend Vite proxy is configured: <code>vite.config.ts</code> should proxy <code>/api</code> to <code>http://localhost:8080</code></td></tr>
+<tr><td>Maven using wrong Java</td><td><code>error: source release 21 requires target release 21</code></td><td>Set <code>JAVA_HOME=$(/usr/libexec/java_home -v 21)</code> in your <code>~/.zshrc</code> or <code>~/.bashrc</code></td></tr>
+</table>
+
+<!-- 7. Environment Variables Reference -->
+<h2>7. Environment Variables Reference</h2>
+<table>
+<tr><th>Variable</th><th>Default (local)</th><th>Used By</th><th>Description</th></tr>
+<tr><td><code>DB_HOST</code></td><td>localhost</td><td>user, vehicle, admin</td><td>PostgreSQL hostname</td></tr>
+<tr><td><code>DB_PORT</code></td><td>5432</td><td>user, vehicle, admin</td><td>PostgreSQL port</td></tr>
+<tr><td><code>DB_NAME</code></td><td>pksdb</td><td>user, vehicle, admin</td><td>PostgreSQL database name</td></tr>
+<tr><td><code>DB_USER</code></td><td>pksadmin</td><td>user, vehicle, admin</td><td>PostgreSQL username</td></tr>
+<tr><td><code>DB_PASSWORD</code></td><td>pkspassword</td><td>user, vehicle, admin</td><td>PostgreSQL password</td></tr>
+<tr><td><code>JWT_SECRET</code></td><td>(must set; ≥32 chars)</td><td>All services</td><td>HMAC-SHA256 signing key for JWT</td></tr>
+<tr><td><code>JWT_EXPIRY_MS</code></td><td>86400000 (24h)</td><td>user-service</td><td>JWT expiry in milliseconds</td></tr>
+<tr><td><code>VEHICLE_SERVICE_URL</code></td><td>http://localhost:8082</td><td>premium-service</td><td>Base URL of vehicle-service</td></tr>
+<tr><td><code>USER_SERVICE_URL</code></td><td>http://localhost:8081</td><td>premium-service, admin</td><td>Base URL of user-service</td></tr>
+<tr><td><code>VITE_PREMIUM_URL</code></td><td>http://localhost:8083</td><td>frontend</td><td>Direct premium-service URL (dev only)</td></tr>
+</table>
+
+<!-- 8. Useful Development Commands -->
+<h2>8. Useful Development Commands</h2>
+<pre><span class="comment"># --- Docker Compose ---</span>
+<span class="cmd">docker</span> compose up <span class="string">-d</span>                          <span class="comment"># Start all in background</span>
+<span class="cmd">docker</span> compose down <span class="string">-v</span>                       <span class="comment"># Stop all + remove volumes</span>
+<span class="cmd">docker</span> compose logs <span class="string">-f</span> user-service          <span class="comment"># Tail user-service logs</span>
+<span class="cmd">docker</span> compose restart premium-service       <span class="comment"># Restart one service</span>
+
+<span class="comment"># --- PostgreSQL ---</span>
+<span class="cmd">psql</span> <span class="string">-h localhost -U pksadmin -d pksdb</span>      <span class="comment"># Open psql shell</span>
+<span class="cmd">psql</span> <span class="string">-h localhost -U pksadmin -d pksdb</span> \
+  <span class="string">-c "SELECT * FROM users LIMIT 5;"</span>          <span class="comment"># Quick query</span>
+<span class="cmd">psql</span> <span class="string">-h localhost -U pksadmin -d pksdb</span> \
+  <span class="string">-c "\dt"</span>                                    <span class="comment"># List all tables</span>
+
+<span class="comment"># --- Maven ---</span>
+<span class="cmd">mvn</span> clean package <span class="string">-DskipTests</span>               <span class="comment"># Fast build (no tests)</span>
+<span class="cmd">mvn</span> test <span class="string">-Dtest=UserServiceTest</span>             <span class="comment"># Run one test class</span>
+<span class="cmd">mvn</span> verify <span class="string">-Pfailsafe</span>                       <span class="comment"># Run integration tests</span>
+<span class="cmd">mvn</span> jacoco:report                            <span class="comment"># Generate coverage report</span>
+<span class="comment"># Coverage HTML at: target/site/jacoco/index.html</span>
+
+<span class="comment"># --- Frontend ---</span>
+<span class="cmd">npm</span> run build                                <span class="comment"># Production build</span>
+<span class="cmd">npm</span> run lint                                 <span class="comment"># ESLint check</span>
+<span class="cmd">npm</span> run type-check                           <span class="comment"># TypeScript type check</span></pre>
+
+<!-- 9. Default Login Credentials -->
+<h2>9. Default Login Credentials</h2>
+<div class="callout">
+<p>⚠️ <strong>These credentials are for local development only.</strong> Change them before deploying to any shared or production environment.</p>
+</div>
+<table>
+<tr><th>Role</th><th>Email</th><th>Password</th><th>How Created</th></tr>
+<tr>
+  <td><strong>Admin</strong></td>
+  <td><code>adminadmin</code> (or <code>admin@pks.com</code>)</td>
+  <td><code>adminpass</code></td>
+  <td>Seeded by <code>scripts/sql/01-users.sql</code> via <code>init-db.sh</code>; password stored as BCrypt hash</td>
+</tr>
+<tr>
+  <td><strong>Regular User</strong></td>
+  <td>Your choice</td>
+  <td>Your choice</td>
+  <td>Create via <code>POST /api/users/register</code> or the frontend <code>/register</code> page</td>
+</tr>
+</table>
+<div class="callout">
+<p>💡 <strong>Tip:</strong> To reset the admin password locally, connect with psql and run:<br/>
+<code>UPDATE users SET password_hash = '$2a$12$...' WHERE email = 'admin@pks.com';</code><br/>
+Generate a new BCrypt hash at <code>https://bcrypt.online</code> or with the Python <code>bcrypt</code> library.</p>
+</div>
+
+<footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

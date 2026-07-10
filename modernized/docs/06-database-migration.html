@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Database Migration Documentation — HSQLDB to PostgreSQL</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;background:#ffffff;color:#1f2328;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h2{font-size:16px;font-weight:700;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px}
+p{margin-bottom:10px}
+.meta{color:#57606a;font-size:12px;margin-bottom:24px}
+.callout{background:#f7f8fa;border:1px solid #e5e7eb;border-left:4px solid #3b82d4;border-radius:6px;padding:14px 16px;margin-bottom:16px}
+.callout p{margin:0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#f7f8fa;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #e5e7eb}
+td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfc}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.badge-critical{background:#fde8e8;color:#c0392b}
+.badge-changed{background:#fef3cd;color:#856404}
+.badge-added{background:#d4edda;color:#155724}
+.badge-removed{background:#f3e8ff;color:#7e22ce}
+.badge-same{background:#f7f8fa;color:#57606a;border:1px solid #e5e7eb}
+.phase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.phase-card{background:#f7f8fa;border:1px solid #e5e7eb;border-radius:6px;padding:12px}
+.phase-card .num{font-size:18px;font-weight:700;color:#3b82d4}
+.phase-card h3{font-size:12px;margin:4px 0}
+.phase-card p{font-size:12px;color:#57606a;margin:0}
+pre{background:#1e1e2e;color:#cdd6f4;border-radius:6px;padding:14px;font-size:12px;overflow-x:auto;margin-bottom:14px;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+pre .comment{color:#6c7086}
+pre .keyword{color:#cba6f7}
+pre .string{color:#a6e3a1}
+code{font-family:"SF Mono",Menlo,monospace;font-size:12px;background:#f7f8fa;padding:1px 5px;border-radius:3px;border:1px solid #e5e7eb}
+ul{margin:6px 0 10px 20px}
+li{margin-bottom:3px}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#57606a;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Database Migration Documentation — HSQLDB to PostgreSQL</h1>
+<p class="meta">Artifact ID: 06_database_migration &nbsp;|&nbsp; Strategy: Expand-Contract (6 phases) &nbsp;|&nbsp; Author: IBM Bob</p>
+
+<!-- 1. Migration Strategy -->
+<h2>1. Migration Strategy</h2>
+<div class="callout">
+<p>The migration follows the <strong>Expand-Contract</strong> (also known as Parallel-Run) pattern to ensure zero-downtime data migration. The legacy HSQLDB is exported, transformed, and imported into PostgreSQL while both systems run in parallel until the cutover is validated.</p>
+</div>
+<div class="phase-grid">
+<div class="phase-card"><div class="num">1</div><h3>Assess</h3><p>Document HSQLDB schema; identify all tables, constraints, data types, and seed data</p></div>
+<div class="phase-card"><div class="num">2</div><h3>Design</h3><p>Design PostgreSQL target schema per bounded context; define Flyway migration scripts</p></div>
+<div class="phase-card"><div class="num">3</div><h3>Export</h3><p>Export HSQLDB data to CSV using CSVWRITE; capture row counts for validation</p></div>
+<div class="phase-card"><div class="num">4</div><h3>Transform</h3><p>Python script: hash plain-text passwords with bcrypt; map column renames; drop SSN</p></div>
+<div class="phase-card"><div class="num">5</div><h3>Load</h3><p>Import transformed CSVs into PostgreSQL using \COPY; run validation queries</p></div>
+<div class="phase-card"><div class="num">6</div><h3>Cutover</h3><p>Switch services to PostgreSQL; deprecate HSQLDB; run final reconciliation</p></div>
+</div>
+
+<!-- 2. Schema: CUSTOMER → users -->
+<h2>2. Schema Changes: CUSTOMER → users</h2>
+<table>
+<tr><th>Legacy Column</th><th>Legacy Type</th><th>New Column</th><th>New Type</th><th>Change</th></tr>
+<tr><td>ID</td><td>INTEGER</td><td>id</td><td>BIGSERIAL</td><td><span class="badge badge-changed">Changed</span> — INT to BIGSERIAL</td></tr>
+<tr><td>FIRSTNAME</td><td>VARCHAR(50)</td><td>first_name</td><td>VARCHAR(50)</td><td><span class="badge badge-changed">Changed</span> — snake_case rename</td></tr>
+<tr><td>LASTNAME</td><td>VARCHAR(50)</td><td>last_name</td><td>VARCHAR(50)</td><td><span class="badge badge-changed">Changed</span> — snake_case rename</td></tr>
+<tr><td>EMAIL</td><td>VARCHAR(100)</td><td>email</td><td>VARCHAR(255)</td><td><span class="badge badge-changed">Changed</span> — wider, PK candidate</td></tr>
+<tr><td>PASSWD</td><td>VARCHAR(50)</td><td>password_hash</td><td>VARCHAR(255)</td><td><span class="badge badge-critical">CRITICAL</span> — BCrypt hash replaces plain-text</td></tr>
+<tr><td>SSN</td><td>VARCHAR(11)</td><td>—</td><td>—</td><td><span class="badge badge-removed">Removed</span> — PII; not required in modernized system</td></tr>
+<tr><td>DOB</td><td>DATE</td><td>date_of_birth</td><td>DATE</td><td><span class="badge badge-changed">Changed</span> — rename only</td></tr>
+<tr><td>ADDRESS</td><td>VARCHAR(200)</td><td>address</td><td>VARCHAR(255)</td><td><span class="badge badge-same">Same</span></td></tr>
+<tr><td>CITY</td><td>VARCHAR(50)</td><td>city</td><td>VARCHAR(100)</td><td><span class="badge badge-same">Same</span></td></tr>
+<tr><td>STATE</td><td>VARCHAR(30)</td><td>state</td><td>VARCHAR(50)</td><td><span class="badge badge-same">Same</span></td></tr>
+<tr><td>ZIP</td><td>VARCHAR(10)</td><td>zip</td><td>VARCHAR(10)</td><td><span class="badge badge-same">Same</span></td></tr>
+<tr><td>PHONE</td><td>VARCHAR(15)</td><td>phone</td><td>VARCHAR(20)</td><td><span class="badge badge-same">Same</span></td></tr>
+<tr><td>—</td><td>—</td><td>created_at</td><td>TIMESTAMPTZ DEFAULT NOW()</td><td><span class="badge badge-added">Added</span> — audit column</td></tr>
+<tr><td>—</td><td>—</td><td>updated_at</td><td>TIMESTAMPTZ DEFAULT NOW()</td><td><span class="badge badge-added">Added</span> — audit column</td></tr>
+</table>
+
+<!-- 3. Schema: VEHICLE → vehicles -->
+<h2>3. Schema Changes: VEHICLE → vehicles</h2>
+<table>
+<tr><th>Legacy Column</th><th>Legacy Type</th><th>New Column</th><th>New Type</th><th>Change</th></tr>
+<tr><td>ID</td><td>INTEGER</td><td>id</td><td>BIGSERIAL</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>MAKE</td><td>VARCHAR(50)</td><td>make</td><td>VARCHAR(100)</td><td><span class="badge badge-same">Same</span></td></tr>
+<tr><td>MODEL</td><td>VARCHAR(50)</td><td>model</td><td>VARCHAR(100)</td><td><span class="badge badge-same">Same</span></td></tr>
+<tr><td>YEAR</td><td>INTEGER</td><td>year</td><td>INTEGER</td><td><span class="badge badge-same">Same</span></td></tr>
+<tr><td>VIN</td><td>VARCHAR(17)</td><td>vin</td><td>VARCHAR(17) UNIQUE</td><td><span class="badge badge-same">Same</span></td></tr>
+<tr><td>CUSTOMER_ID</td><td>INTEGER FK</td><td>owner_email</td><td>VARCHAR(255)</td><td><span class="badge badge-changed">Changed</span> — int FK replaced with email (loose coupling across service boundaries)</td></tr>
+<tr><td>—</td><td>—</td><td>created_at</td><td>TIMESTAMPTZ DEFAULT NOW()</td><td><span class="badge badge-added">Added</span></td></tr>
+<tr><td>—</td><td>—</td><td>updated_at</td><td>TIMESTAMPTZ DEFAULT NOW()</td><td><span class="badge badge-added">Added</span></td></tr>
+<tr><td>—</td><td>—</td><td>color</td><td>VARCHAR(50)</td><td><span class="badge badge-added">Added</span> — new optional field</td></tr>
+<tr><td>—</td><td>—</td><td>mileage</td><td>INTEGER</td><td><span class="badge badge-added">Added</span> — new optional field for premium calc</td></tr>
+<tr><td>—</td><td>—</td><td>insurance_type</td><td>VARCHAR(50)</td><td><span class="badge badge-added">Added</span></td></tr>
+<tr><td>—</td><td>—</td><td>is_active</td><td>BOOLEAN DEFAULT TRUE</td><td><span class="badge badge-added">Added</span> — soft delete flag</td></tr>
+</table>
+
+<!-- 4. Schema: USER_ROLE → user_roles -->
+<h2>4. Schema Changes: USER_ROLE → user_roles</h2>
+<table>
+<tr><th>Legacy Column</th><th>Legacy Type</th><th>New Column</th><th>New Type</th><th>Change</th></tr>
+<tr><td>ID</td><td>INTEGER</td><td>user_id</td><td>BIGINT FK → users.id</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>EMAIL</td><td>VARCHAR(100)</td><td>—</td><td>—</td><td><span class="badge badge-removed">Removed</span> — FK is now by user.id</td></tr>
+<tr><td>ROLE_NAME</td><td>VARCHAR(30)</td><td>role</td><td>VARCHAR(50) CHECK IN ('ROLE_USER','ROLE_ADMIN')</td><td><span class="badge badge-changed">Changed</span> — enforced with CHECK constraint</td></tr>
+</table>
+
+<!-- 5. Data Migration Scripts -->
+<h2>5. Data Migration Scripts</h2>
+<h3>Step 1 — Export from HSQLDB (Bash)</h3>
+<pre><span class="comment"># Run within HSQLDB console or via JDBC tool</span>
+CALL CSVWRITE('/tmp/customers.csv',
+  'SELECT ID, FIRSTNAME, LASTNAME, EMAIL, PASSWD, DOB,
+          ADDRESS, CITY, STATE, ZIP, PHONE
+   FROM CUSTOMER');
+
+CALL CSVWRITE('/tmp/vehicles.csv',
+  'SELECT ID, MAKE, MODEL, YEAR, VIN, CUSTOMER_ID
+   FROM VEHICLE');
+
+CALL CSVWRITE('/tmp/user_roles.csv',
+  'SELECT UR.ID, C.EMAIL, UR.ROLE_NAME
+   FROM USER_ROLE UR JOIN CUSTOMER C ON C.EMAIL = UR.EMAIL');</pre>
+
+<h3>Step 2 — Transform Passwords (Python + bcrypt)</h3>
+<pre><span class="keyword">import</span> csv, bcrypt, sys
+
+input_file  = <span class="string">'/tmp/customers.csv'</span>
+output_file = <span class="string">'/tmp/customers_hashed.csv'</span>
+
+<span class="keyword">with</span> open(input_file) <span class="keyword">as</span> fin, open(output_file, <span class="string">'w'</span>, newline=<span class="string">''</span>) <span class="keyword">as</span> fout:
+    reader = csv.DictReader(fin)
+    fieldnames = [<span class="string">'id'</span>,<span class="string">'first_name'</span>,<span class="string">'last_name'</span>,<span class="string">'email'</span>,
+                  <span class="string">'password_hash'</span>,<span class="string">'date_of_birth'</span>,<span class="string">'address'</span>,
+                  <span class="string">'city'</span>,<span class="string">'state'</span>,<span class="string">'zip'</span>,<span class="string">'phone'</span>]
+    writer = csv.DictWriter(fout, fieldnames=fieldnames)
+    writer.writeheader()
+    <span class="keyword">for</span> row <span class="keyword">in</span> reader:
+        hashed = bcrypt.hashpw(
+            row[<span class="string">'PASSWD'</span>].encode(<span class="string">'utf-8'</span>),
+            bcrypt.gensalt(rounds=12)
+        ).decode(<span class="string">'utf-8'</span>)
+        writer.writerow({
+            <span class="string">'id'</span>: row[<span class="string">'ID'</span>],
+            <span class="string">'first_name'</span>: row[<span class="string">'FIRSTNAME'</span>],
+            <span class="string">'last_name'</span>: row[<span class="string">'LASTNAME'</span>],
+            <span class="string">'email'</span>: row[<span class="string">'EMAIL'</span>],
+            <span class="string">'password_hash'</span>: hashed,
+            <span class="string">'date_of_birth'</span>: row[<span class="string">'DOB'</span>],
+            <span class="string">'address'</span>: row[<span class="string">'ADDRESS'</span>],
+            <span class="string">'city'</span>: row[<span class="string">'CITY'</span>],
+            <span class="string">'state'</span>: row[<span class="string">'STATE'</span>],
+            <span class="string">'zip'</span>: row[<span class="string">'ZIP'</span>],
+            <span class="string">'phone'</span>: row[<span class="string">'PHONE'</span>]
+        })
+print(<span class="string">"Password transformation complete."</span>)</pre>
+
+<h3>Step 3 — PostgreSQL Import (\COPY)</h3>
+<pre><span class="comment">-- Connect: psql -h localhost -U pksadmin -d pksdb</span>
+
+<span class="keyword">\COPY</span> users(id,first_name,last_name,email,password_hash,
+            date_of_birth,address,city,state,zip,phone)
+  FROM <span class="string">'/tmp/customers_hashed.csv'</span>
+  WITH (FORMAT CSV, HEADER TRUE);
+
+<span class="keyword">\COPY</span> vehicles(id,make,model,year,vin,owner_email)
+  FROM <span class="string">'/tmp/vehicles_mapped.csv'</span>
+  WITH (FORMAT CSV, HEADER TRUE);
+
+<span class="keyword">\COPY</span> user_roles(user_id,role)
+  FROM <span class="string">'/tmp/user_roles_mapped.csv'</span>
+  WITH (FORMAT CSV, HEADER TRUE);
+
+<span class="comment">-- Reset sequences after bulk load</span>
+SELECT setval(<span class="string">'users_id_seq'</span>, (SELECT MAX(id) FROM users));
+SELECT setval(<span class="string">'vehicles_id_seq'</span>, (SELECT MAX(id) FROM vehicles));</pre>
+
+<h3>Step 4 — Validation Queries</h3>
+<pre><span class="comment">-- Row count reconciliation</span>
+SELECT <span class="string">'users'</span>    AS tbl, COUNT(*) FROM users
+UNION ALL
+SELECT <span class="string">'vehicles'</span> AS tbl, COUNT(*) FROM vehicles
+UNION ALL
+SELECT <span class="string">'user_roles'</span> AS tbl, COUNT(*) FROM user_roles;
+
+<span class="comment">-- Verify no plain-text passwords survived</span>
+SELECT COUNT(*) FROM users
+WHERE password_hash NOT LIKE <span class="string">'$2a$%'</span>;
+<span class="comment">-- Expected: 0</span>
+
+<span class="comment">-- Verify admin role exists</span>
+SELECT u.email, ur.role
+FROM users u JOIN user_roles ur ON u.id = ur.user_id
+WHERE ur.role = <span class="string">'ROLE_ADMIN'</span>;</pre>
+
+<!-- 6. SQL Init Scripts -->
+<h2>6. SQL Init Scripts</h2>
+<p>Schema is managed via plain SQL scripts under <code>scripts/sql/</code>. Run <code>scripts/init-db.sh</code> once before starting any service. All statements use <code>IF NOT EXISTS</code> so the script is safe to re-run.</p>
+<table>
+<tr><th>Script</th><th>Service</th><th>Description</th></tr>
+<tr><td>scripts/sql/01-users.sql</td><td>user-service</td><td>CREATE TABLE users, user_roles + seed admin</td></tr>
+<tr><td>scripts/sql/02-vehicles.sql</td><td>vehicle-service</td><td>CREATE TABLE vehicles</td></tr>
+<tr><td>scripts/sql/03-quotes.sql</td><td>premium-service</td><td>CREATE TABLE quotes</td></tr>
+</table>
+
+<!-- 7. Rollback Plan -->
+<h2>7. Rollback Plan</h2>
+<div class="callout">
+<p>To roll back the schema, restore from a database snapshot taken before the <code>init-db.sh</code> run.</p>
+</div>
+<pre><span class="comment"># Take snapshot before migration (Phase 3)</span>
+pg_dump -h localhost -U pksadmin -d pksdb \
+  --format=custom \
+  --file=/backups/pksdb_pre_migration_$(date +%Y%m%d%H%M).dump
+
+<span class="comment"># Restore if rollback required</span>
+pg_restore -h localhost -U pksadmin -d pksdb_rollback \
+  --clean --if-exists \
+  /backups/pksdb_pre_migration_20250101_1200.dump
+
+<span class="comment"># Re-point services to original HSQLDB (revert application.yml)</span>
+<span class="comment"># spring.datasource.url: jdbc:hsqldb:file:/data/pksdb;shutdown=true</span>
+kubectl set env deployment/user-service \
+  DB_URL="jdbc:hsqldb:file:/data/pksdb;shutdown=true" \
+  -n pks-insurance</pre>
+
+<footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Integration Test Case Documentation — PKS Auto Insurance</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;background:#ffffff;color:#1f2328;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h2{font-size:16px;font-weight:700;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px}
+p{margin-bottom:10px}
+.meta{color:#57606a;font-size:12px;margin-bottom:24px}
+.callout{background:#f7f8fa;border:1px solid #e5e7eb;border-left:4px solid #3b82d4;border-radius:6px;padding:14px 16px;margin-bottom:16px}
+.callout p{margin:0;margin-bottom:6px}
+.callout p:last-child{margin-bottom:0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#f7f8fa;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #e5e7eb}
+td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfc}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.badge-pos{background:#d4edda;color:#155724}
+.badge-neg{background:#fde8e8;color:#c0392b}
+.badge-edge{background:#fef3cd;color:#856404}
+.badge-sec{background:#f3e8ff;color:#7e22ce}
+code{font-family:"SF Mono",Menlo,monospace;font-size:12px;background:#f7f8fa;padding:1px 5px;border-radius:3px;border:1px solid #e5e7eb}
+.tc-id{font-weight:700;color:#3b82d4;white-space:nowrap}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#57606a;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Integration Test Case Documentation — PKS Auto Insurance</h1>
+<p class="meta">Artifact ID: 08_integration_test_cases &nbsp;|&nbsp; Framework: Spring Boot Test + Testcontainers &nbsp;|&nbsp; Author: IBM Bob</p>
+
+<div class="callout">
+<p><strong>Test Infrastructure:</strong> Integration tests use <strong>Testcontainers</strong> to spin up a real PostgreSQL container, <strong>Spring Boot Test</strong> with <code>@SpringBootTest(webEnvironment = RANDOM_PORT)</code>, <strong>MockMvc</strong> / <strong>RestAssured</strong> for HTTP assertions, and <strong>WireMock</strong> for mocking downstream service calls. Flyway runs migrations automatically on test startup.</p>
+<p><strong>Scope:</strong> These tests verify the full request-to-database path within each service boundary. Cross-service calls are mocked via WireMock stubs.</p>
+</div>
+
+<!-- 1. User Registration & Authentication -->
+<h2>1. User Registration &amp; Authentication Flow</h2>
+<p style="color:#57606a;font-size:13px">Service: <code>user-service</code> &nbsp;|&nbsp; Test class: <code>UserAuthIntegrationTest</code> &nbsp;|&nbsp; Annotations: <code>@SpringBootTest</code>, <code>@Testcontainers</code>, <code>@Sql(reset)</code></p>
+<table>
+<tr><th>ID</th><th>Scenario</th><th>HTTP Method &amp; Path</th><th>Request Body / Headers</th><th>Expected Status</th><th>Assertions</th><th>Type</th></tr>
+<tr>
+  <td class="tc-id">IT-AUTH-001</td>
+  <td>Register new user successfully</td>
+  <td>POST /api/users/register</td>
+  <td>JSON: firstName, lastName, email, password, dob, address</td>
+  <td>201 Created</td>
+  <td>Body contains id; email in response; no password field; user row in DB with BCrypt hash</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-AUTH-002</td>
+  <td>Register with duplicate email</td>
+  <td>POST /api/users/register</td>
+  <td>JSON with already-registered email</td>
+  <td>409 Conflict</td>
+  <td>Body: error message "Email already registered"; no duplicate row in DB</td>
+  <td><span class="badge badge-neg">Negative</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-AUTH-003</td>
+  <td>Login with valid credentials</td>
+  <td>POST /api/users/login</td>
+  <td>JSON: email, password (matching registered user)</td>
+  <td>200 OK</td>
+  <td>Response contains <code>token</code> field; token is valid JWT (3 parts); role claim present</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-AUTH-004</td>
+  <td>Login with wrong password</td>
+  <td>POST /api/users/login</td>
+  <td>JSON: correct email, wrong password</td>
+  <td>401 Unauthorized</td>
+  <td>No token in response; error message "Invalid credentials"</td>
+  <td><span class="badge badge-neg">Negative</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-AUTH-005</td>
+  <td>Access protected endpoint without JWT</td>
+  <td>GET /api/users/profile</td>
+  <td>No Authorization header</td>
+  <td>401 Unauthorized</td>
+  <td>Response body contains "Unauthorized" or WWW-Authenticate header present</td>
+  <td><span class="badge badge-sec">Security</span></td>
+</tr>
+</table>
+
+<!-- 2. Vehicle Registration Flow -->
+<h2>2. Vehicle Registration Flow</h2>
+<p style="color:#57606a;font-size:13px">Service: <code>vehicle-service</code> &nbsp;|&nbsp; Test class: <code>VehicleRegistrationIntegrationTest</code> &nbsp;|&nbsp; JWT: real token from user-service container</p>
+<table>
+<tr><th>ID</th><th>Scenario</th><th>HTTP Method &amp; Path</th><th>Request Body / Headers</th><th>Expected Status</th><th>Assertions</th><th>Type</th></tr>
+<tr>
+  <td class="tc-id">IT-VEH-001</td>
+  <td>Register vehicle for authenticated user</td>
+  <td>POST /api/vehicles</td>
+  <td>JSON: make, model, year, vin &nbsp;|&nbsp; Header: Bearer JWT</td>
+  <td>201 Created</td>
+  <td>Response has id; owner_email matches JWT sub; vehicle row in DB</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-VEH-002</td>
+  <td>Register vehicle with duplicate VIN</td>
+  <td>POST /api/vehicles</td>
+  <td>JSON with VIN already registered &nbsp;|&nbsp; Bearer JWT</td>
+  <td>409 Conflict</td>
+  <td>Error: "VIN already registered"; no duplicate row inserted</td>
+  <td><span class="badge badge-neg">Negative</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-VEH-003</td>
+  <td>List own vehicles</td>
+  <td>GET /api/vehicles</td>
+  <td>Bearer JWT (user with 2 registered vehicles)</td>
+  <td>200 OK</td>
+  <td>Array of 2 vehicles; all ownerEmail = JWT sub; no other users' vehicles returned</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-VEH-004</td>
+  <td>Attempt to list vehicles without auth</td>
+  <td>GET /api/vehicles</td>
+  <td>No Authorization header</td>
+  <td>401 Unauthorized</td>
+  <td>No vehicle data exposed; security filter blocks request</td>
+  <td><span class="badge badge-sec">Security</span></td>
+</tr>
+</table>
+
+<!-- 3. Premium Quote End-to-End -->
+<h2>3. Premium Quote End-to-End Flow</h2>
+<p style="color:#57606a;font-size:13px">Service: <code>premium-service</code> &nbsp;|&nbsp; Test class: <code>PremiumQuoteIntegrationTest</code> &nbsp;|&nbsp; WireMock stubs for vehicle-service + user-service</p>
+<table>
+<tr><th>ID</th><th>Scenario</th><th>HTTP Method &amp; Path</th><th>Setup</th><th>Expected Status</th><th>Assertions</th><th>Type</th></tr>
+<tr>
+  <td class="tc-id">IT-QUO-001</td>
+  <td>Get quote for standard adult driver</td>
+  <td>POST /api/premium/quote</td>
+  <td>WireMock: vehicle year=2019; user age=35; no luxury brand</td>
+  <td>200 OK</td>
+  <td>Response: premium = 500.0; quoteId not null; generatedAt present</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-QUO-002</td>
+  <td>Quote with young driver surcharge</td>
+  <td>POST /api/premium/quote</td>
+  <td>WireMock: vehicle year=2021; user dob = 22 years ago</td>
+  <td>200 OK</td>
+  <td>Response: premium = 700.0 (base 500 + young 200)</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-QUO-003</td>
+  <td>Quote with vehicle-service down (circuit breaker)</td>
+  <td>POST /api/premium/quote</td>
+  <td>WireMock: vehicle-service returns 503</td>
+  <td>200 OK (fallback) or 503</td>
+  <td>Either returns fallback premium or descriptive error; no unhandled exception 500</td>
+  <td><span class="badge badge-edge">Edge</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-QUO-004</td>
+  <td>Quote request without JWT</td>
+  <td>POST /api/premium/quote</td>
+  <td>No Authorization header</td>
+  <td>401 Unauthorized</td>
+  <td>Request blocked at security filter; no downstream calls made</td>
+  <td><span class="badge badge-sec">Security</span></td>
+</tr>
+</table>
+
+<!-- 4. Admin Operations Flow -->
+<h2>4. Admin Operations Flow</h2>
+<p style="color:#57606a;font-size:13px">Service: <code>user-service</code> &nbsp;|&nbsp; Test class: <code>UserAdminOperationsIntegrationTest</code> &nbsp;|&nbsp; Requires ROLE_ADMIN JWT</p>
+<table>
+<tr><th>ID</th><th>Scenario</th><th>HTTP Method &amp; Path</th><th>Request Headers</th><th>Expected Status</th><th>Assertions</th><th>Type</th></tr>
+<tr>
+  <td class="tc-id">IT-ADM-001</td>
+  <td>Admin lists all users</td>
+  <td>GET /api/users</td>
+  <td>Bearer JWT (ROLE_ADMIN)</td>
+  <td>200 OK</td>
+  <td>Response is array; each element has email, firstName, lastName; no password field</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-ADM-002</td>
+  <td>Regular user cannot access admin endpoint</td>
+  <td>GET /api/users</td>
+  <td>Bearer JWT (ROLE_USER)</td>
+  <td>403 Forbidden</td>
+  <td>Error body; no user data returned; security constraint enforced</td>
+  <td><span class="badge badge-sec">Security</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-ADM-003</td>
+  <td>Admin removes a user successfully</td>
+  <td>DELETE /api/users/{email}</td>
+  <td>Bearer JWT (ROLE_ADMIN); valid user email in path</td>
+  <td>204 No Content</td>
+  <td>User row deleted from DB; subsequent GET by email returns 404</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-ADM-004</td>
+  <td>Admin removes non-existent user</td>
+  <td>DELETE /api/users/{email}</td>
+  <td>Bearer JWT (ROLE_ADMIN); unknown email</td>
+  <td>404 Not Found</td>
+  <td>Error: "User not found"; no DB changes</td>
+  <td><span class="badge badge-neg">Negative</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-ADM-005</td>
+  <td>Admin views platform statistics</td>
+  <td>GET /api/admin/stats</td>
+  <td>Bearer JWT (ROLE_ADMIN)</td>
+  <td>200 OK</td>
+  <td>Response: userCount (integer), vehicleCount (integer); values match DB row counts</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+</table>
+
+<!-- 5. Profile Update Flow -->
+<h2>5. Profile Update Flow</h2>
+<p style="color:#57606a;font-size:13px">Service: <code>user-service</code> &nbsp;|&nbsp; Test class: <code>ProfileUpdateIntegrationTest</code></p>
+<table>
+<tr><th>ID</th><th>Scenario</th><th>HTTP Method &amp; Path</th><th>Request Body / Headers</th><th>Expected Status</th><th>Assertions</th><th>Type</th></tr>
+<tr>
+  <td class="tc-id">IT-PRF-001</td>
+  <td>Update own profile successfully</td>
+  <td>PUT /api/users/profile</td>
+  <td>JSON: new phone + address &nbsp;|&nbsp; Bearer JWT</td>
+  <td>200 OK</td>
+  <td>Response reflects updated fields; DB row updated; email and password unchanged</td>
+  <td><span class="badge badge-pos">Positive</span></td>
+</tr>
+<tr>
+  <td class="tc-id">IT-PRF-002</td>
+  <td>Cannot update another user's profile</td>
+  <td>PUT /api/users/profile</td>
+  <td>JSON with different email in body &nbsp;|&nbsp; Bearer JWT for user A</td>
+  <td>403 Forbidden</td>
+  <td>Service uses JWT sub only; ignores body email; no cross-user modification possible</td>
+  <td><span class="badge badge-sec">Security</span></td>
+</tr>
+</table>
+
+<!-- 6. Test Environment Setup -->
+<h2>6. Test Environment Setup</h2>
+<table>
+<tr><th>Component</th><th>Technology</th><th>Configuration</th><th>Notes</th></tr>
+<tr>
+  <td>PostgreSQL</td>
+  <td>Testcontainers <code>PostgreSQLContainer</code></td>
+  <td>Image: postgres:15-alpine; random port; auto schema</td>
+  <td>Lifecycle: per test class (<code>@Container static</code>)</td>
+</tr>
+<tr>
+  <td>HTTP Client</td>
+  <td>MockMvc (within-process) + TestRestTemplate (RANDOM_PORT)</td>
+  <td><code>@AutoConfigureMockMvc</code> or <code>webEnvironment=RANDOM_PORT</code></td>
+  <td>MockMvc for controller tests; TestRestTemplate for full-stack</td>
+</tr>
+<tr>
+  <td>Downstream Mocks</td>
+  <td>WireMock (<code>WireMockServer</code>)</td>
+  <td>Stubbed responses for vehicle-service and user-service</td>
+  <td>WireMock port injected via <code>@DynamicPropertySource</code></td>
+</tr>
+<tr>
+  <td>JWT</td>
+  <td>Real <code>JwtUtil.generateToken()</code></td>
+  <td>Test secret key in <code>application-test.yml</code></td>
+  <td>Not mocked — tests verify real token validation</td>
+</tr>
+<tr>
+  <td>Database Migrations</td>
+  <td>Flyway</td>
+  <td>Runs automatically on context start; <code>cleanOnValidationError=true</code> for tests</td>
+  <td>Clean slate per test class via <code>@Sql(scripts="classpath:reset.sql")</code></td>
+</tr>
+<tr>
+  <td>Spring Boot Test</td>
+  <td><code>@SpringBootTest</code></td>
+  <td><code>webEnvironment = RANDOM_PORT</code>; profile: <code>test</code></td>
+  <td>Full application context loaded; real beans; datasource from Testcontainers</td>
+</tr>
+</table>
+
+<footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

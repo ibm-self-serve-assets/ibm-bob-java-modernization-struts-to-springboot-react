@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+ <!DOCTYPE tiles-definitions PUBLIC
+       "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+       "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+
+<tiles-definitions>
+
+	<!-- base Layout -->
+	<definition name=".mainLayout"
+		path="/pages/template/layouts/classicLayout.jsp">
+		<put name="title" value="Auto Insurance" />
+		<put name="header" value="/pages/template/header.jsp" />
+<!-- 		<put name="menu" value=".mainMenu" /> -->
+		<put name="footer" value="/pages/template/footer.jsp" />
+		<put name="body" value="" />
+	</definition>
+
+	<!-- main menu -->
+<!-- 	<definition name=".mainMenu"
+		path="pages/template/layouts/vboxLayout.jsp">
+		<putList name="list">
+			<add value=".menu.links" />
+			<add value=".menu.taglib.references" />
+			<add value=".menu.printer.friendly" />
+			<add value=".menu.old.documents" />
+		</putList>
+	</definition>
+ -->
+<!-- login page -->
+	<definition name="loginPage" extends=".mainLayout">
+		<put name="title" value="Login" />
+		<put name="body" value="/pages/login.jsp" />
+	</definition>
+
+<!-- home -->
+	<definition name="home" extends=".mainLayout">
+		<put name="title" value="Home" />
+		<put name="body" value="/pages/home.jsp" />
+	</definition>
+
+<!-- user administration -->
+	<definition name="adminhome" extends=".mainLayout">
+		<put name="title" value="AutoInsurance - Users Administration" />
+		<put name="body" value="/pages/adminManage.jsp" />
+	</definition>
+
+<!-- profile update -->
+	<definition name="profileUpdate" extends=".mainLayout">
+		<put name="title" value="Login" />
+		<put name="body" value="/pages/profileUpdate.jsp" />
+	</definition>
+
+<!-- register -->
+	<definition name="registerUser" extends=".mainLayout">
+		<put name="title" value="Customer Register" />
+		<put name="body" value="/pages/register.jsp" />
+	</definition>
+
+<!-- vehicle register -->
+	<definition name="registerVehicle" extends=".mainLayout">
+		<put name="title" value="Vehicle Details" />
+		<put name="body" value="/pages/vehicle.jsp" />
+	</definition>
+
+	<!-- quote -->
+	<definition name="quotePage" extends=".mainLayout">
+		<put name="title" value="Final Quotation" />
+		<put name="body" value="/pages/quote.jsp" />
+	</definition>
+
+
+<!-- 	<definition name="${YOUR_DEFINITION_HERE}"> -->
+<!-- 	</definition> -->
+
+</tiles-definitions>

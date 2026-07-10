@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>DevSecOps Pipeline Plan — PKS Auto Insurance</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;background:#ffffff;color:#1f2328;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h2{font-size:16px;font-weight:700;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px}
+p{margin-bottom:10px}
+.meta{color:#57606a;font-size:12px;margin-bottom:24px}
+.callout{background:#f7f8fa;border:1px solid #e5e7eb;border-left:4px solid #3b82d4;border-radius:6px;padding:14px 16px;margin-bottom:16px}
+.callout p{margin:0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#f7f8fa;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #e5e7eb}
+td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfc}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.badge-fail{background:#fde8e8;color:#c0392b}
+.badge-warn{background:#fef3cd;color:#856404}
+.badge-pass{background:#d4edda;color:#155724}
+.badge-info{background:#dbeafe;color:#1e40af}
+.pipeline-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;align-items:center}
+.stage-box{background:#3b82d4;color:#fff;font-size:11px;font-weight:700;padding:8px 10px;border-radius:6px;text-align:center;min-width:64px;line-height:1.3}
+.stage-box.sec{background:#7c3aed}
+.stage-box.test{background:#16a34a}
+.stage-box.deploy{background:#0d9488}
+.stage-box.gate{background:#d97706;color:#fff}
+.stage-num{font-size:9px;font-weight:400;display:block;opacity:.85;margin-bottom:2px}
+.arrow{color:#57606a;font-size:16px;font-weight:700;flex-shrink:0}
+ul{margin:6px 0 10px 20px}
+li{margin-bottom:3px}
+code{font-family:"SF Mono",Menlo,monospace;font-size:12px;background:#f7f8fa;padding:1px 5px;border-radius:3px;border:1px solid #e5e7eb}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#57606a;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>DevSecOps Pipeline Plan — PKS Auto Insurance</h1>
+<p class="meta">Artifact ID: 09_devsecops_pipeline &nbsp;|&nbsp; CI/CD: GitHub Actions &nbsp;|&nbsp; Author: IBM Bob</p>
+
+<!-- 1. Pipeline Architecture -->
+<h2>1. Pipeline Architecture</h2>
+<div class="callout">
+<p>The pipeline implements <strong>Shift-Left Security</strong> — security gates are embedded at every stage from commit to production. No stage can be skipped for production deployments. The pipeline is defined in <code>.github/workflows/ci-cd.yml</code> and triggered on all branch pushes and pull requests.</p>
+</div>
+<div class="pipeline-row">
+  <div class="stage-box"><span class="stage-num">①</span>Source<br/>Control</div>
+  <div class="arrow">→</div>
+  <div class="stage-box sec"><span class="stage-num">②</span>Build &amp;<br/>SAST</div>
+  <div class="arrow">→</div>
+  <div class="stage-box test"><span class="stage-num">③</span>Unit<br/>Tests</div>
+  <div class="arrow">→</div>
+  <div class="stage-box sec"><span class="stage-num">④</span>SCA<br/>Deps</div>
+  <div class="arrow">→</div>
+  <div class="stage-box"><span class="stage-num">⑤</span>Container<br/>Build</div>
+  <div class="arrow">→</div>
+  <div class="stage-box sec"><span class="stage-num">⑥</span>Image<br/>Scan</div>
+  <div class="arrow">→</div>
+  <div class="stage-box deploy"><span class="stage-num">⑦</span>Deploy<br/>Staging</div>
+  <div class="arrow">→</div>
+  <div class="stage-box test"><span class="stage-num">⑧</span>Integration<br/>Tests</div>
+  <div class="arrow">→</div>
+  <div class="stage-box gate"><span class="stage-num">⑨</span>DAST<br/>Scan</div>
+  <div class="arrow">→</div>
+  <div class="stage-box deploy"><span class="stage-num">⑩</span>Deploy<br/>Prod</div>
+</div>
+
+<!-- 2. Stage Definitions -->
+<h2>2. Pipeline Stage Definitions</h2>
+<table>
+<tr><th>#</th><th>Stage</th><th>Tool</th><th>Action</th><th>Failure Policy</th></tr>
+<tr>
+  <td>①</td>
+  <td>Source Control</td>
+  <td>GitHub / git-secrets</td>
+  <td>Pre-commit hooks: secret scanning (Gitleaks), lint, formatting check</td>
+  <td><span class="badge badge-fail">BLOCK</span> — secrets found = block push</td>
+</tr>
+<tr>
+  <td>②</td>
+  <td>Build &amp; SAST</td>
+  <td>Maven + SpotBugs + SonarQube</td>
+  <td><code>mvn clean package</code>; SpotBugs find-sec-bugs plugin; SonarQube quality gate</td>
+  <td><span class="badge badge-fail">BLOCK</span> — Critical/High findings fail build</td>
+</tr>
+<tr>
+  <td>③</td>
+  <td>Unit Tests</td>
+  <td>JUnit 5 + JaCoCo</td>
+  <td><code>mvn test</code>; JaCoCo coverage report published; badge on PR</td>
+  <td><span class="badge badge-fail">BLOCK</span> — any test failure or coverage &lt;80%</td>
+</tr>
+<tr>
+  <td>④</td>
+  <td>SCA — Dependency Check</td>
+  <td>OWASP Dependency-Check + Dependabot</td>
+  <td>Scan all Maven dependencies for known CVEs; generate SBOM (CycloneDX)</td>
+  <td><span class="badge badge-fail">BLOCK</span> — Critical CVE in dependency</td>
+</tr>
+<tr>
+  <td>⑤</td>
+  <td>Container Build</td>
+  <td>Docker Buildx + GitHub Container Registry</td>
+  <td>Multi-stage Dockerfile; non-root user; tag with git SHA and semver</td>
+  <td><span class="badge badge-fail">BLOCK</span> — build failure</td>
+</tr>
+<tr>
+  <td>⑥</td>
+  <td>Image Scan</td>
+  <td>Trivy (Aqua Security)</td>
+  <td>Scan Docker image for OS + library CVEs; check for secrets in layers</td>
+  <td><span class="badge badge-fail">BLOCK</span> — Critical CVE in image</td>
+</tr>
+<tr>
+  <td>⑦</td>
+  <td>Deploy to Staging</td>
+  <td>Kubernetes + ArgoCD</td>
+  <td>Apply Helm chart to staging namespace; Flyway migrations run; health checks verified</td>
+  <td><span class="badge badge-fail">BLOCK</span> — deployment fails health check</td>
+</tr>
+<tr>
+  <td>⑧</td>
+  <td>Integration Tests</td>
+  <td>Maven Failsafe + RestAssured</td>
+  <td>Run full integration test suite against staging environment; WireMock not used here</td>
+  <td><span class="badge badge-fail">BLOCK</span> — any integration test failure</td>
+</tr>
+<tr>
+  <td>⑨</td>
+  <td>DAST Scan</td>
+  <td>OWASP ZAP (Zed Attack Proxy)</td>
+  <td>Active scan against staging API; spider all endpoints; check OWASP Top 10</td>
+  <td><span class="badge badge-warn">WARN</span> High / <span class="badge badge-fail">BLOCK</span> Critical findings</td>
+</tr>
+<tr>
+  <td>⑩</td>
+  <td>Deploy to Production</td>
+  <td>ArgoCD + GitHub Environments</td>
+  <td>2-approver gate; blue-green or canary deploy; auto-rollback on health failure</td>
+  <td><span class="badge badge-fail">BLOCK</span> — awaiting approval or health fail</td>
+</tr>
+</table>
+
+<!-- 3. Security Gates -->
+<h2>3. Security Gates Summary</h2>
+<table>
+<tr><th>Gate</th><th>Tool</th><th>Threshold</th><th>Stage</th><th>Action on Fail</th></tr>
+<tr><td>SAST</td><td>SpotBugs + SonarQube</td><td>Zero Critical or High</td><td>②</td><td>Block pipeline; open JIRA issue</td></tr>
+<tr><td>Secrets Detection</td><td>Gitleaks</td><td>Zero secrets in code or git history</td><td>①</td><td>Block push; alert Security team</td></tr>
+<tr><td>Dependency CVE</td><td>OWASP Dependency-Check</td><td>Zero Critical CVEs</td><td>④</td><td>Block pipeline; Dependabot PR auto-created</td></tr>
+<tr><td>Container Image Scan</td><td>Trivy</td><td>Zero Critical, &lt;5 High</td><td>⑥</td><td>Block pipeline; update base image</td></tr>
+<tr><td>DAST</td><td>OWASP ZAP</td><td>Zero Critical</td><td>⑨</td><td>Block prod deploy; security triage</td></tr>
+<tr><td>License Compliance</td><td>CycloneDX SBOM + FOSSA</td><td>No GPL/AGPL in production deps</td><td>④</td><td>Warn; manual review gate</td></tr>
+<tr><td>Production Approval</td><td>GitHub Environments</td><td>2 of: Tech Lead + Security + SRE</td><td>⑩</td><td>Block; await approval</td></tr>
+</table>
+
+<!-- 4. Branch & Trigger Strategy -->
+<h2>4. Branch &amp; Trigger Strategy</h2>
+<table>
+<tr><th>Branch Pattern</th><th>Trigger</th><th>Pipeline Stages</th><th>Deploy Target</th></tr>
+<tr>
+  <td><code>feature/*</code></td>
+  <td>Push + Pull Request to develop</td>
+  <td>① → ② → ③ → ④ (no deploy)</td>
+  <td>None</td>
+</tr>
+<tr>
+  <td><code>develop</code></td>
+  <td>Merge PR</td>
+  <td>① → ② → ③ → ④ → ⑤ → ⑥ → ⑦ → ⑧ (no DAST)</td>
+  <td>Staging (auto)</td>
+</tr>
+<tr>
+  <td><code>release/*</code></td>
+  <td>Branch creation + push</td>
+  <td>① → ② → ③ → ④ → ⑤ → ⑥ → ⑦ → ⑧ → ⑨</td>
+  <td>Staging + UAT (auto)</td>
+</tr>
+<tr>
+  <td><code>main</code></td>
+  <td>Merge PR from release/* (protected)</td>
+  <td>Full pipeline ① → ⑩</td>
+  <td>Production (manual gate ⑩)</td>
+</tr>
+</table>
+
+<!-- 5. Artifact Management -->
+<h2>5. Artifact Management</h2>
+<table>
+<tr><th>Artifact Type</th><th>Storage</th><th>Naming Convention</th><th>Retention</th></tr>
+<tr><td>Maven JARs</td><td>GitHub Packages / Nexus</td><td><code>{service}-{version}-{gitsha}.jar</code></td><td>90 days (snapshots); indefinite (releases)</td></tr>
+<tr><td>Docker Images</td><td>GitHub Container Registry (ghcr.io)</td><td><code>ghcr.io/pks/{service}:{semver}-{sha}</code></td><td>30 days (pr), 90 days (branch), indefinite (release tags)</td></tr>
+<tr><td>Test Reports</td><td>GitHub Actions Artifacts</td><td>JUnit XML + JaCoCo HTML</td><td>30 days</td></tr>
+<tr><td>SAST Reports</td><td>SonarQube + GitHub Security tab</td><td>SpotBugs XML, SonarQube project</td><td>Indefinite</td></tr>
+<tr><td>DAST Reports</td><td>S3 (encrypted) + GitHub Artifacts</td><td>ZAP HTML/JSON report with timestamp</td><td>1 year (compliance)</td></tr>
+</table>
+
+<!-- 6. Compliance & Audit -->
+<h2>6. Compliance &amp; Audit Requirements</h2>
+<ul>
+<li>📋 <strong>Pipeline Audit Logging:</strong> All pipeline executions logged to S3 with actor, timestamp, stage results, and artifact SHAs for 1-year retention.</li>
+<li>👥 <strong>Two-Person Integrity:</strong> Production deployments require approval from two distinct named approvers (GitHub CODEOWNERS + Environments protection rule).</li>
+<li>🔏 <strong>Image Signing:</strong> All production Docker images are signed with <code>cosign</code> (Sigstore); signature verified before ArgoCD deploys to production.</li>
+<li>📦 <strong>Software Bill of Materials:</strong> CycloneDX SBOM generated at stage ④ and attached to every GitHub Release; published to Dependency-Track for continuous monitoring.</li>
+<li>🗃️ <strong>Immutable Audit Trail:</strong> Git history, pipeline logs, and security scan results stored in write-once S3 bucket with Object Lock (WORM).</li>
+<li>🔑 <strong>Secrets Management:</strong> All credentials managed via HashiCorp Vault; no secrets in environment variables or source code; injected at runtime via Vault Agent sidecar.</li>
+</ul>
+
+<footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

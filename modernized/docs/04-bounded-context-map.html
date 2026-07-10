@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Bounded Context Map — PKS Auto Insurance</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;background:#ffffff;color:#1f2328;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h2{font-size:16px;font-weight:700;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px}
+p{margin-bottom:10px}
+.meta{color:#57606a;font-size:12px;margin-bottom:24px}
+.callout{background:#f7f8fa;border:1px solid #e5e7eb;border-left:4px solid #3b82d4;border-radius:6px;padding:14px 16px;margin-bottom:16px}
+.callout p{margin:0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#f7f8fa;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #e5e7eb}
+td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfc}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.badge-ohs{background:#dbeafe;color:#1e40af}
+.badge-cs{background:#d4edda;color:#155724}
+.badge-conf{background:#fde8e8;color:#c0392b}
+.badge-acl{background:#fef3cd;color:#856404}
+.badge-sk{background:#f3e8ff;color:#7e22ce}
+.badge-sf{background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0}
+.legend-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px}
+.legend-dot{width:14px;height:14px;border-radius:3px}
+svg{width:100%;height:auto;margin-bottom:8px}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#57606a;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Bounded Context Map — PKS Auto Insurance</h1>
+<p class="meta">Artifact ID: 04_bounded_context_map &nbsp;|&nbsp; Pattern: DDD Strategic Design &nbsp;|&nbsp; Author: IBM Bob</p>
+
+<!-- 1. Introduction -->
+<h2>1. Introduction</h2>
+<div class="callout">
+<p>A Bounded Context Map visualises how different DDD contexts relate to each other. Key DDD relationship patterns used here: <strong>Open Host Service (OHS)</strong> — a provider publishes a formal API; <strong>Customer/Supplier</strong> — downstream is a "customer" of upstream, with influence over priorities; <strong>Conformist</strong> — downstream must conform to upstream's model without negotiation; <strong>Anti-Corruption Layer (ACL)</strong> — downstream translates upstream's model to protect its own.</p>
+</div>
+
+<!-- 2. Context Map Diagram -->
+<h2>2. Context Map Diagram</h2>
+
+<svg viewBox="0 0 620 480" xmlns="http://www.w3.org/2000/svg" style="background:#f7f8fa;border:1px solid #e5e7eb;border-radius:8px;">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#57606a"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#3b82d4"/>
+    </marker>
+  </defs>
+
+  <!-- React Frontend -->
+  <rect x="210" y="20" width="200" height="50" rx="8" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+  <text x="310" y="42" text-anchor="middle" font-size="13" font-weight="700" fill="#1e40af">React Frontend</text>
+  <text x="310" y="58" text-anchor="middle" font-size="11" fill="#3b82f6">:3000 — UI (OHS Consumer)</text>
+
+  <!-- API Gateway -->
+  <rect x="200" y="110" width="220" height="54" rx="8" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="1.5"/>
+  <text x="310" y="133" text-anchor="middle" font-size="13" font-weight="700" fill="#0369a1">api-gateway</text>
+  <text x="310" y="150" text-anchor="middle" font-size="11" fill="#0284c7">:8080 — Open Host Service</text>
+
+  <!-- Arrow: Frontend → Gateway -->
+  <line x1="310" y1="70" x2="310" y2="108" stroke="#3b82d4" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <rect x="318" y="82" width="60" height="16" rx="3" fill="#fff" stroke="#e5e7eb"/>
+  <text x="348" y="94" text-anchor="middle" font-size="10" fill="#57606a">OHS / REST</text>
+
+  <!-- user-service -->
+  <rect x="20" y="260" width="160" height="54" rx="8" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>
+  <text x="100" y="283" text-anchor="middle" font-size="13" font-weight="700" fill="#15803d">user-service</text>
+  <text x="100" y="300" text-anchor="middle" font-size="11" fill="#16a34a">:8081 — Identity BC</text>
+
+  <!-- vehicle-service -->
+  <rect x="200" y="260" width="160" height="54" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1.5"/>
+  <text x="280" y="283" text-anchor="middle" font-size="13" font-weight="700" fill="#7c3aed">vehicle-service</text>
+  <text x="280" y="300" text-anchor="middle" font-size="11" fill="#8b5cf6">:8082 — Vehicle BC</text>
+
+  <!-- premium-service -->
+  <rect x="390" y="260" width="160" height="54" rx="8" fill="#fef9c3" stroke="#fde68a" stroke-width="1.5"/>
+  <text x="470" y="283" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">premium-service</text>
+  <text x="470" y="300" text-anchor="middle" font-size="11" fill="#b45309">:8083 — Premium BC</text>
+
+  <!-- PostgreSQL -->
+  <rect x="190" y="400" width="240" height="48" rx="8" fill="#ccfbf1" stroke="#5eead4" stroke-width="1.5"/>
+  <text x="310" y="422" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">PostgreSQL</text>
+  <text x="310" y="438" text-anchor="middle" font-size="11" fill="#0d9488">:5432 — Per-Schema Isolation</text>
+
+  <!-- Arrow: Gateway → user-service -->
+  <line x1="250" y1="164" x2="120" y2="258" stroke="#57606a" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="165" y="215" text-anchor="middle" font-size="10" fill="#57606a" transform="rotate(-30,165,215)">Customer/Supplier</text>
+
+  <!-- Arrow: Gateway → vehicle-service -->
+  <line x1="290" y1="164" x2="270" y2="258" stroke="#57606a" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="265" y="215" text-anchor="middle" font-size="10" fill="#57606a">Conformist</text>
+
+  <!-- Arrow: Gateway → premium-service -->
+  <line x1="370" y1="164" x2="450" y2="258" stroke="#57606a" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="425" y="215" text-anchor="middle" font-size="10" fill="#57606a">Conformist</text>
+
+  <!-- Arrow: premium-service → vehicle-service (depends on) -->
+  <line x1="392" y1="287" x2="362" y2="287" stroke="#b45309" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="377" y="281" text-anchor="middle" font-size="10" fill="#b45309">REST</text>
+
+  <!-- Arrow: premium-service → user-service (depends on) -->
+  <line x1="392" y1="300" x2="182" y2="300" stroke="#b45309" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="287" y="295" text-anchor="middle" font-size="10" fill="#b45309">ACL</text>
+
+  <!-- Arrow: user-service → PostgreSQL -->
+  <line x1="110" y1="314" x2="230" y2="398" stroke="#57606a" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Arrow: vehicle-service → PostgreSQL -->
+  <line x1="280" y1="314" x2="295" y2="398" stroke="#57606a" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Arrow: premium-service → PostgreSQL -->
+  <line x1="450" y1="314" x2="395" y2="398" stroke="#57606a" stroke-width="1" marker-end="url(#arrow)"/>
+</svg>
+
+<!-- 3. Context Relationship Details -->
+<h2>3. Context Relationship Details</h2>
+<table>
+<tr><th>#</th><th>Upstream</th><th>Downstream</th><th>Pattern</th><th>Protocol</th><th>Notes</th></tr>
+<tr><td>R-01</td><td>api-gateway</td><td>React Frontend</td><td><span class="badge badge-ohs">OHS</span></td><td>HTTPS/REST + CORS</td><td>Gateway publishes stable REST API; frontend conforms to it</td></tr>
+<tr><td>R-02</td><td>user-service</td><td>api-gateway</td><td><span class="badge badge-cs">Customer/Supplier</span></td><td>HTTP/REST</td><td>Gateway is a "customer" — can influence user-service API evolution via contract</td></tr>
+<tr><td>R-03</td><td>vehicle-service</td><td>premium-service</td><td><span class="badge badge-conf">Conformist</span></td><td>HTTP/REST</td><td>Premium service must conform to vehicle-service's data model; no translation layer</td></tr>
+<tr><td>R-04</td><td>user-service</td><td>premium-service</td><td><span class="badge badge-acl">ACL</span></td><td>HTTP/REST</td><td>Premium service applies Anti-Corruption Layer to translate user model to its own RiskProfile concept</td></tr>
+</table>
+
+<!-- 4. Integration Patterns Applied -->
+<h2>4. Integration Patterns Applied</h2>
+<table>
+<tr><th>Pattern</th><th>Applied Where</th><th>Purpose</th></tr>
+<tr><td><span class="badge badge-ohs">Open Host Service</span></td><td>api-gateway → all services</td><td>Stable public API contract for React SPA; versioned endpoints</td></tr>
+<tr><td><span class="badge badge-acl">Anti-Corruption Layer</span></td><td>premium-service ← user-service</td><td>Translates <code>User</code> entity to internal <code>RiskProfile</code> DTO, preventing model leakage</td></tr>
+<tr><td><span class="badge badge-cs">Customer/Supplier</span></td><td>user-service ↔ api-gateway</td><td>Gateway team (customer) influences user-service (supplier) API priority via contract negotiation</td></tr>
+<tr><td><span class="badge badge-conf">Conformist</span></td><td>vehicle-service → premium-service</td><td>Premium service adopts vehicle-service's model without translation</td></tr>
+<tr><td><span class="badge badge-sk">Shared Kernel</span></td><td>JWT claims across all services</td><td>Common <code>JwtUtil</code> library and token claim schema shared across all services (versioned)</td></tr>
+<tr><td><span class="badge badge-sf">Strangler Fig</span></td><td>Legacy monolith → microservices</td><td>Routes migrated feature-by-feature behind gateway; monolith decommissioned incrementally</td></tr>
+</table>
+
+<!-- 5. Team Topology -->
+<h2>5. Team Topology</h2>
+<table>
+<tr><th>Team</th><th>Type</th><th>Owns</th><th>Interactions</th></tr>
+<tr><td><strong>Identity Team</strong></td><td>Stream-aligned</td><td>user-service</td><td>X-as-a-Service to Insurance team; owns admin operations (ROLE_ADMIN guarded endpoints)</td></tr>
+<tr><td><strong>Insurance Team</strong></td><td>Stream-aligned</td><td>vehicle-service, premium-service</td><td>Collaboration with Identity Team on user data contract</td></tr>
+<tr><td><strong>Platform Team</strong></td><td>Platform</td><td>api-gateway, PostgreSQL, CI/CD, Observability</td><td>Enabling all stream-aligned teams</td></tr>
+<tr><td><strong>UI Team</strong></td><td>Stream-aligned</td><td>React frontend</td><td>Consuming Gateway OHS; collaborates on UX design</td></tr>
+</table>
+
+<!-- 6. Legend -->
+<h2>6. Colour Legend</h2>
+<div class="legend-row">
+<div class="legend-item"><div class="legend-dot" style="background:#dbeafe;border:1px solid #93c5fd"></div><span>React Frontend (Blue)</span></div>
+<div class="legend-item"><div class="legend-dot" style="background:#e0f2fe;border:1px solid #7dd3fc"></div><span>API Gateway (Light Blue)</span></div>
+<div class="legend-item"><div class="legend-dot" style="background:#dcfce7;border:1px solid #86efac"></div><span>user-service (Green)</span></div>
+<div class="legend-item"><div class="legend-dot" style="background:#ede9fe;border:1px solid #c4b5fd"></div><span>vehicle-service (Purple)</span></div>
+<div class="legend-item"><div class="legend-dot" style="background:#fef9c3;border:1px solid #fde68a"></div><span>premium-service (Yellow)</span></div>
+<div class="legend-item"><div class="legend-dot" style="background:#ccfbf1;border:1px solid #5eead4"></div><span>PostgreSQL (Teal)</span></div>
+</div>
+<table>
+<tr><th>Line Style</th><th>Meaning</th></tr>
+<tr><td>Solid line ──→</td><td>Synchronous REST routing (gateway to services)</td></tr>
+<tr><td>Dashed line - - →</td><td>Synchronous REST service-to-service call (with Circuit Breaker)</td></tr>
+</table>
+
+<footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

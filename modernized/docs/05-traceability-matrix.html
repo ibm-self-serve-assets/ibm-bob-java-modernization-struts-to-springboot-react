@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Traceability Matrix — Legacy to Modernized</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;background:#ffffff;color:#1f2328;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h2{font-size:16px;font-weight:700;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px}
+p{margin-bottom:10px}
+.meta{color:#57606a;font-size:12px;margin-bottom:24px}
+.callout{background:#f7f8fa;border:1px solid #e5e7eb;border-left:4px solid #3b82d4;border-radius:6px;padding:14px 16px;margin-bottom:16px}
+.callout p{margin:0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#f7f8fa;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #e5e7eb}
+td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfc}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.badge-direct{background:#d4edda;color:#155724}
+.badge-changed{background:#fef3cd;color:#856404}
+.badge-removed{background:#fde8e8;color:#c0392b}
+.badge-new{background:#dbeafe;color:#1e40af}
+.badge-split{background:#f3e8ff;color:#7e22ce}
+code{font-family:"SF Mono",Menlo,monospace;font-size:12px;background:#f7f8fa;padding:1px 5px;border-radius:3px;border:1px solid #e5e7eb}
+.arrow{color:#57606a;font-size:14px}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#57606a;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Traceability Matrix — Legacy to Modernized</h1>
+<p class="meta">Artifact ID: 05_traceability_matrix &nbsp;|&nbsp; Coverage: All 6 layers &nbsp;|&nbsp; Author: IBM Bob</p>
+
+<div class="callout">
+<p>This matrix traces every legacy component (Action classes, Services, DAOs, Domain entities, Views, Config) to its equivalent in the modernized microservices platform. Mapping types: <span class="badge badge-direct">Direct</span> 1:1 port &nbsp; <span class="badge badge-changed">Changed</span> significant refactor &nbsp; <span class="badge badge-split">Split</span> one → many &nbsp; <span class="badge badge-new">New</span> no legacy equivalent &nbsp; <span class="badge badge-removed">Removed</span> not needed.</p>
+</div>
+
+<!-- 1. Action Classes → Controllers -->
+<h2>1. Action Classes → REST Controllers</h2>
+<table>
+<tr><th>#</th><th>Legacy Class</th><th>Legacy URL</th><th>Modern Class</th><th>Modern Endpoint</th><th>Service</th><th>Type</th></tr>
+<tr>
+  <td>1</td>
+  <td><code>LoginAction</code></td>
+  <td>POST /login</td>
+  <td><code>UserController.login()</code></td>
+  <td>POST /api/users/login</td>
+  <td>user-service</td>
+  <td><span class="badge badge-changed">Changed</span></td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>LogoutAction</code></td>
+  <td>GET /logout</td>
+  <td>Frontend token removal</td>
+  <td>Client-side JWT discard</td>
+  <td>frontend</td>
+  <td><span class="badge badge-changed">Changed</span></td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>RegisterUserAction</code></td>
+  <td>POST /registerUser</td>
+  <td><code>UserController.register()</code></td>
+  <td>POST /api/users/register</td>
+  <td>user-service</td>
+  <td><span class="badge badge-direct">Direct</span></td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>RegisterVehicleAction</code></td>
+  <td>POST /registerVehicle</td>
+  <td><code>VehicleController.registerVehicle()</code></td>
+  <td>POST /api/vehicles</td>
+  <td>vehicle-service</td>
+  <td><span class="badge badge-direct">Direct</span></td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>UpdateUserAction</code></td>
+  <td>POST /updateUser</td>
+  <td><code>UserController.updateUser()</code></td>
+  <td>PUT /api/users/profile</td>
+  <td>user-service</td>
+  <td><span class="badge badge-changed">Changed</span></td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>QuoteAction</code></td>
+  <td>POST /getQuote</td>
+  <td><code>PremiumController.getQuote()</code></td>
+  <td>POST /api/premium/quote</td>
+  <td>premium-service</td>
+  <td><span class="badge badge-changed">Changed</span></td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>AdminSearchUserAction</code></td>
+  <td>GET /adminSearchUser</td>
+  <td><code>UserController.getAllUsers()</code></td>
+  <td>GET /api/users</td>
+  <td>user-service</td>
+  <td><span class="badge badge-changed">Changed</span></td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>AdminRemoveUserAction</code></td>
+  <td>POST /adminRemoveUser</td>
+  <td><code>UserController.removeUser()</code></td>
+  <td>DELETE /api/users/{ssn}</td>
+  <td>user-service</td>
+  <td><span class="badge badge-changed">Changed</span></td>
+</tr>
+</table>
+
+<!-- 2. Service Layer -->
+<h2>2. Service Layer → Service Layer</h2>
+<table>
+<tr><th>#</th><th>Legacy Method</th><th>Legacy Class</th><th>Modern Method</th><th>Modern Class</th><th>Service</th><th>Type</th></tr>
+<tr><td>1</td><td><code>login(email, passwd)</code></td><td>UserServiceImpl</td><td><code>login(LoginRequest)</code></td><td>UserService</td><td>user-service</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>2</td><td><code>register(UserForm)</code></td><td>UserServiceImpl</td><td><code>register(RegisterRequest)</code></td><td>UserService</td><td>user-service</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>3</td><td><code>updateUser(UserForm)</code></td><td>UserServiceImpl</td><td><code>updateUser(String email, UpdateRequest)</code></td><td>UserService</td><td>user-service</td><td><span class="badge badge-direct">Direct</span></td></tr>
+<tr><td>4</td><td><code>searchUsers(String)</code></td><td>UserServiceImpl</td><td><code>getAllUsers()</code></td><td>UserService</td><td>user-service</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>5</td><td><code>removeUser(String email)</code></td><td>UserServiceImpl</td><td><code>deleteUser(String email)</code></td><td>UserService</td><td>user-service</td><td><span class="badge badge-direct">Direct</span></td></tr>
+<tr><td>6</td><td><code>getUserByEmail(String)</code></td><td>UserServiceImpl</td><td><code>findByEmail(String)</code></td><td>UserService</td><td>user-service</td><td><span class="badge badge-direct">Direct</span></td></tr>
+<tr><td>7</td><td><code>registerVehicle(VehicleForm)</code></td><td>VehicleServiceImpl</td><td><code>registerVehicle(VehicleRequest, String email)</code></td><td>VehicleService</td><td>vehicle-service</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>8</td><td><code>getVehiclesByUser(int userId)</code></td><td>VehicleServiceImpl</td><td><code>getVehiclesByEmail(String email)</code></td><td>VehicleService</td><td>vehicle-service</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>9</td><td><code>calculatePremium(Vehicle, User)</code></td><td>VehicleServiceImpl</td><td><code>calculatePremium(QuoteRequest)</code></td><td>PremiumService</td><td>premium-service</td><td><span class="badge badge-split">Split</span></td></tr>
+<tr><td>10</td><td>—</td><td>—</td><td><code>generateJwt(UserDetails)</code></td><td>JwtUtil</td><td>user-service</td><td><span class="badge badge-new">New</span></td></tr>
+</table>
+
+<!-- 3. DAO Layer -->
+<h2>3. DAO Layer → Repository Layer</h2>
+<table>
+<tr><th>#</th><th>Legacy Method</th><th>Legacy Technology</th><th>Modern Method</th><th>Modern Technology</th><th>Type</th></tr>
+<tr><td>1</td><td><code>UserDAO.findByEmail()</code></td><td>HibernateTemplate.find(HQL)</td><td><code>UserRepository.findByEmail()</code></td><td>Spring Data JPA derived query</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>2</td><td><code>UserDAO.save(User)</code></td><td>HibernateTemplate.save()</td><td><code>UserRepository.save(User)</code></td><td>JpaRepository.save()</td><td><span class="badge badge-direct">Direct</span></td></tr>
+<tr><td>3</td><td><code>UserDAO.update(User)</code></td><td>HibernateTemplate.update()</td><td><code>UserRepository.save(User)</code></td><td>JPA merge semantics</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>4</td><td><code>UserDAO.delete(User)</code></td><td>HibernateTemplate.delete()</td><td><code>UserRepository.deleteByEmail()</code></td><td>Spring Data @Modifying query</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>5</td><td><code>UserDAO.findAll()</code></td><td>HibernateTemplate.loadAll()</td><td><code>UserRepository.findAll()</code></td><td>JpaRepository.findAll()</td><td><span class="badge badge-direct">Direct</span></td></tr>
+<tr><td>6</td><td><code>VehicleDAO.save(Vehicle)</code></td><td>HibernateTemplate.save()</td><td><code>VehicleRepository.save(Vehicle)</code></td><td>JpaRepository.save()</td><td><span class="badge badge-direct">Direct</span></td></tr>
+<tr><td>7</td><td><code>VehicleDAO.findByUserId(int)</code></td><td>HibernateTemplate.find(HQL)</td><td><code>VehicleRepository.findByOwnerEmail(String)</code></td><td>Spring Data JPA derived query</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>8</td><td><code>VehicleDAO.findById(int)</code></td><td>HibernateTemplate.get()</td><td><code>VehicleRepository.findById(Long)</code></td><td>JpaRepository.findById()</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>9</td><td><code>VehicleDAO.delete(Vehicle)</code></td><td>HibernateTemplate.delete()</td><td><code>VehicleRepository.deleteById(Long)</code></td><td>JpaRepository.deleteById()</td><td><span class="badge badge-changed">Changed</span></td></tr>
+</table>
+
+<!-- 4. Domain Model → JPA Entities -->
+<h2>4. Domain Model → JPA Entities</h2>
+<table>
+<tr><th>Legacy Class</th><th>Legacy Table</th><th>Modern Class</th><th>Modern Table</th><th>Key Changes</th><th>Type</th></tr>
+<tr>
+  <td><code>User</code></td>
+  <td>CUSTOMER</td>
+  <td><code>User</code></td>
+  <td>users</td>
+  <td>PASSWD → password_hash (BCrypt); SSN removed; added createdAt; Long id (was int)</td>
+  <td><span class="badge badge-changed">Changed</span></td>
+</tr>
+<tr>
+  <td><code>Vehicle</code></td>
+  <td>VEHICLE</td>
+  <td><code>Vehicle</code></td>
+  <td>vehicles</td>
+  <td>CUSTOMER_ID (int FK) → ownerEmail (String, loose ref); Long id; added createdAt</td>
+  <td><span class="badge badge-changed">Changed</span></td>
+</tr>
+<tr>
+  <td><code>UserRole</code></td>
+  <td>USER_ROLE</td>
+  <td>Role embedded in <code>User.roles</code></td>
+  <td>user_roles (join table)</td>
+  <td>Separate table → @ElementCollection on User; role stored as enum</td>
+  <td><span class="badge badge-changed">Changed</span></td>
+</tr>
+</table>
+
+<!-- 5. View Layer → React Components -->
+<h2>5. View Layer → React Components</h2>
+<table>
+<tr><th>#</th><th>Legacy JSP</th><th>React Component / Page</th><th>Route</th><th>State Management</th><th>Type</th></tr>
+<tr><td>1</td><td>login.jsp</td><td><code>LoginPage.jsx</code></td><td>/login</td><td>Local state + fetch POST /api/users/login</td><td><span class="badge badge-direct">Direct</span></td></tr>
+<tr><td>2</td><td>register.jsp</td><td><code>RegisterPage.jsx</code></td><td>/register</td><td>Local form state + validation</td><td><span class="badge badge-direct">Direct</span></td></tr>
+<tr><td>3</td><td>dashboard.jsp</td><td><code>DashboardPage.jsx</code></td><td>/dashboard</td><td>Context API (auth + vehicle data)</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>4</td><td>registerVehicle.jsp</td><td><code>RegisterVehiclePage.jsx</code></td><td>/vehicles/register</td><td>Local form state</td><td><span class="badge badge-direct">Direct</span></td></tr>
+<tr><td>5</td><td>updateUser.jsp</td><td><code>ProfilePage.jsx</code></td><td>/profile</td><td>Pre-filled from GET /api/users/profile</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>6</td><td>quote.jsp</td><td><code>QuotePage.jsx</code></td><td>/quote</td><td>Local state; displays quote result</td><td><span class="badge badge-direct">Direct</span></td></tr>
+<tr><td>7</td><td>admin.jsp</td><td><code>AdminPage.jsx</code></td><td>/admin</td><td>Context API; ROLE_ADMIN guard on route</td><td><span class="badge badge-changed">Changed</span></td></tr>
+</table>
+
+<!-- 6. Configuration → Modern Config -->
+<h2>6. Configuration → Modern Configuration</h2>
+<table>
+<tr><th>#</th><th>Legacy File</th><th>Technology</th><th>Modern Equivalent</th><th>Technology</th><th>Type</th></tr>
+<tr><td>1</td><td>struts-config.xml</td><td>Struts 1.3 XML</td><td>@RestController + @RequestMapping</td><td>Spring Boot annotations</td><td><span class="badge badge-removed">Removed</span></td></tr>
+<tr><td>2</td><td>applicationContext.xml</td><td>Spring XML beans</td><td>@SpringBootApplication + @Bean</td><td>Spring Boot auto-config</td><td><span class="badge badge-removed">Removed</span></td></tr>
+<tr><td>3</td><td>hibernate.cfg.xml</td><td>Hibernate XML config</td><td>application.yml spring.datasource + spring.jpa</td><td>Spring Boot YAML</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>4</td><td>spring-security.xml (commented)</td><td>Spring Security XML</td><td>SecurityFilterChain @Bean</td><td>Spring Security 6.x Java config</td><td><span class="badge badge-new">New</span></td></tr>
+<tr><td>5</td><td>log4j.properties</td><td>Log4j 1.x</td><td>logback-spring.xml</td><td>Logback (Spring Boot default)</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>6</td><td>web.xml</td><td>Servlet 2.5 XML</td><td>Embedded Tomcat (no web.xml)</td><td>Spring Boot embedded server</td><td><span class="badge badge-removed">Removed</span></td></tr>
+<tr><td>7</td><td>HSQLDB init SQL</td><td>SQL script in classpath</td><td>V1__create_schema.sql (per service)</td><td>Flyway migration</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>8</td><td>pom.xml (monolith)</td><td>Maven, Java 1.6</td><td>pom.xml (per service)</td><td>Maven, Java 21, Spring Boot 3.x BOM</td><td><span class="badge badge-changed">Changed</span></td></tr>
+<tr><td>9</td><td>—</td><td>—</td><td>docker-compose.yml</td><td>Docker Compose</td><td><span class="badge badge-new">New</span></td></tr>
+<tr><td>10</td><td>—</td><td>—</td><td>.github/workflows/ci.yml</td><td>GitHub Actions</td><td><span class="badge badge-new">New</span></td></tr>
+</table>
+
+<!-- 7. Security Improvements Summary -->
+<h2>7. Security Improvements Summary</h2>
+<table>
+<tr><th>#</th><th>Legacy Vulnerability</th><th>Modern Fix</th><th>Where Applied</th></tr>
+<tr><td>S-01</td><td>Plain-text passwords in CUSTOMER.PASSWD</td><td>BCryptPasswordEncoder (strength 12) applied at registration and login</td><td>user-service: UserService.register()</td></tr>
+<tr><td>S-02</td><td>Hardcoded admin/admin123 with no role check</td><td>ROLE_ADMIN enforced via Spring Security method security and JWT claims</td><td>user-service + api-gateway filter</td></tr>
+<tr><td>S-03</td><td>Spring Security completely commented out</td><td>Active SecurityFilterChain with JWT authentication filter on all protected routes</td><td>All services: SecurityConfig</td></tr>
+<tr><td>S-04</td><td>No stateless auth; session-based login</td><td>Stateless JWT (HS256, 24h expiry); no server-side session</td><td>user-service: JwtUtil</td></tr>
+<tr><td>S-05</td><td>No CSRF protection</td><td>CSRF disabled for stateless REST API (JWT-based auth makes CSRF irrelevant for APIs); SameSite cookies on frontend</td><td>SecurityConfig.csrf().disable() + frontend</td></tr>
+<tr><td>S-06</td><td>SSN stored in plain-text</td><td>SSN field removed from modernized schema; not required by modernized business logic</td><td>Database migration</td></tr>
+</table>
+
+<footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

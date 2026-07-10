@@ -1,0 +1,10 @@
+com/pks/insurance/vehicle/repository/VehicleRepository.class
+com/pks/insurance/vehicle/domain/Vehicle$VehicleBuilder.class
+com/pks/insurance/vehicle/dto/VehicleResponse$VehicleResponseBuilder.class
+com/pks/insurance/vehicle/dto/VehicleResponse.class
+com/pks/insurance/vehicle/config/WebConfig.class
+com/pks/insurance/vehicle/domain/Vehicle.class
+com/pks/insurance/vehicle/controller/VehicleController.class
+com/pks/insurance/vehicle/dto/VehicleRequest.class
+com/pks/insurance/vehicle/VehicleServiceApplication.class
+com/pks/insurance/vehicle/service/VehicleService.class

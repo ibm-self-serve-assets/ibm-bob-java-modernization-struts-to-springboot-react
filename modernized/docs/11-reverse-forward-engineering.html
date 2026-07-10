@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Reverse &amp; Forward Engineering Approach — PKS Auto Insurance Modernization</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;background:#ffffff;color:#1f2328;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h2{font-size:16px;font-weight:700;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px}
+p{margin-bottom:10px}
+.meta{color:#57606a;font-size:12px;margin-bottom:24px}
+.callout{background:#f7f8fa;border:1px solid #e5e7eb;border-left:4px solid #3b82d4;border-radius:6px;padding:14px 16px;margin-bottom:16px}
+.callout p{margin:0;margin-bottom:4px}
+.callout p:last-child{margin-bottom:0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#f7f8fa;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #e5e7eb}
+td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfc}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.badge-re{background:#fee2e2;color:#991b1b}
+.badge-fe{background:#dcfce7;color:#166534}
+.badge-km{background:#f3e8ff;color:#6b21a8}
+.badge-tool{background:#dbeafe;color:#1e40af}
+.badge-low{background:#dcfce7;color:#166534}
+.badge-med{background:#fef9c3;color:#854d0e}
+.badge-high{background:#fee2e2;color:#991b1b}
+code{font-family:"SF Mono",Menlo,monospace;font-size:12px;background:#f7f8fa;padding:1px 5px;border-radius:3px;border:1px solid #e5e7eb}
+ul{margin:6px 0 10px 20px}
+li{margin-bottom:3px}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#57606a;font-size:12px}
+.phase-label{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:6px}
+.phase-re{background:#fee2e2;color:#991b1b}
+.phase-fe{background:#dcfce7;color:#166534}
+svg{display:block;margin:0 auto 16px auto;max-width:100%}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Reverse &amp; Forward Engineering Approach — PKS Auto Insurance Modernization</h1>
+<p class="meta">Artifact ID: 11_reverse_forward_engineering &nbsp;|&nbsp; Project: PKS Auto Insurance &nbsp;|&nbsp; Author: IBM Bob</p>
+
+<!-- 1. Overview -->
+<h2>1. Overview</h2>
+<div class="callout">
+<p><strong>Two-phase engineering</strong> is the backbone of the PKS Auto Insurance modernization. The goal is to move safely from a Struts 1.3 Java 1.6 monolith to three Spring Boot 3.x microservices <em>without losing a single business rule</em>. The two phases are deliberately separated so that understanding is complete before generation begins.</p>
+</div>
+<h3>Phase 1 — Reverse Engineering</h3>
+<p>Reverse engineering extracts latent knowledge from the legacy codebase — business rules buried in Action classes, data contracts hiding in Hibernate mapping files, security assumptions encoded in XML configuration, and API surfaces scattered across <code>struts-config.xml</code>. The deliverable of this phase is a <strong>Knowledge Model</strong>: a structured, technology-neutral set of artefacts (catalogues, ERDs, sequence diagrams, vulnerability reports) that faithfully describes <em>what</em> the system does without describing <em>how</em> it does it in Struts terms.</p>
+<h3>Phase 2 — Forward Engineering</h3>
+<p>Forward engineering consumes the Knowledge Model and synthesises modern implementation artefacts. IBM Bob generates JPA entities, OpenAPI 3.0 contracts, Spring Security 6 JWT configuration, Flyway migration scripts, JUnit 5 test suites, and Docker/Jenkins CI-CD manifests. Every generated artefact is traceable back to a specific reverse-engineering output, ensuring no knowledge is invented and none is lost.</p>
+<p>The two phases are connected by a <strong>traceability chain</strong> (see Section 4) that provides an audit-ready line of evidence from every line of legacy code to its modern equivalent.</p>
+
+<!-- 2. Reverse Engineering Activities -->
+<h2>2. Reverse Engineering Activities</h2>
+<div class="callout">
+<p><span class="phase-label phase-re">Phase 1</span> Each activity below analyses a specific facet of the legacy system and produces a structured output artefact consumed by Phase 2.</p>
+</div>
+<table>
+<tr>
+  <th>#</th>
+  <th>Activity</th>
+  <th>Input Artifact</th>
+  <th>Output Artifact</th>
+  <th>Tool / Technique</th>
+  <th>Owner</th>
+</tr>
+<tr>
+  <td>RE-01</td>
+  <td>Legacy code scanning</td>
+  <td><code>struts-config.xml</code>, Action classes, JSPs</td>
+  <td>Application inventory (component catalogue, URL mapping table)</td>
+  <td>IBM Bob static scan</td>
+  <td>Modernization Lead</td>
+</tr>
+<tr>
+  <td>RE-02</td>
+  <td>Business rule extraction</td>
+  <td>Service layer, DAO classes, validation logic</td>
+  <td>Business rule catalogue (BF-01 → BF-08)</td>
+  <td>IBM Bob AST analysis + manual review</td>
+  <td>BA + Lead Dev</td>
+</tr>
+<tr>
+  <td>RE-03</td>
+  <td>Data model reverse engineering</td>
+  <td>HSQLDB schema DDL, Hibernate <code>.hbm.xml</code> mappings</td>
+  <td>ERD + data dictionary (column types, constraints, relationships)</td>
+  <td>SchemaSpy / IBM Bob schema reader</td>
+  <td>DBA</td>
+</tr>
+<tr>
+  <td>RE-04</td>
+  <td>Security posture analysis</td>
+  <td><code>spring-security.xml</code>, <code>AuthenticationAction</code>, session config</td>
+  <td>Vulnerability report (CVEs, OWASP gaps, session fixation risks)</td>
+  <td>OWASP Dependency-Check, IBM Bob security scan</td>
+  <td>Security Engineer</td>
+</tr>
+<tr>
+  <td>RE-05</td>
+  <td>Dependency analysis</td>
+  <td><code>pom.xml</code> (legacy)</td>
+  <td>Dependency graph + CVE report (outdated libs, EOL runtimes)</td>
+  <td>OWASP Dependency-Check, Maven Enforcer</td>
+  <td>DevOps Engineer</td>
+</tr>
+<tr>
+  <td>RE-06</td>
+  <td>Control flow mapping</td>
+  <td>Struts action chaining, <code>forward</code> declarations, interceptors</td>
+  <td>Sequence diagrams (8 core user journeys)</td>
+  <td>IBM Bob flow tracer</td>
+  <td>Lead Dev</td>
+</tr>
+<tr>
+  <td>RE-07</td>
+  <td>API surface discovery</td>
+  <td>URL path mappings in <code>struts-config.xml</code>, form beans</td>
+  <td>Legacy API catalogue (method, path, request/response shapes)</td>
+  <td>IBM Bob URL extractor</td>
+  <td>Lead Dev</td>
+</tr>
+</table>
+
+<!-- 3. Forward Engineering Activities -->
+<h2>3. Forward Engineering Activities</h2>
+<div class="callout">
+<p><span class="phase-label phase-fe">Phase 2</span> Every forward engineering activity consumes one or more Knowledge Model artefacts and must pass a defined validation gate before the output is considered accepted.</p>
+</div>
+<table>
+<tr>
+  <th>#</th>
+  <th>Activity</th>
+  <th>Input</th>
+  <th>Output</th>
+  <th>Validation Gate</th>
+</tr>
+<tr>
+  <td>FE-01</td>
+  <td>Domain model design</td>
+  <td>ERD + data dictionary (RE-03)</td>
+  <td>JPA entities (<code>@Entity</code>) + PostgreSQL DDL</td>
+  <td>G1 — compiles; G4 — DB assertions pass</td>
+</tr>
+<tr>
+  <td>FE-02</td>
+  <td>API contract design</td>
+  <td>Legacy API catalogue (RE-07)</td>
+  <td>OpenAPI 3.0 specification (3 service specs)</td>
+  <td>G1 — contract lint passes; G5 — PO review</td>
+</tr>
+<tr>
+  <td>FE-03</td>
+  <td>Microservice scaffolding</td>
+  <td>Bounded context map (from RE-01 + RE-02)</td>
+  <td>Spring Boot 3.x project structure (user / vehicle / premium services)</td>
+  <td>G1 — all three services build cleanly</td>
+</tr>
+<tr>
+  <td>FE-04</td>
+  <td>Security re-implementation</td>
+  <td>Vulnerability report (RE-04)</td>
+  <td>Spring Security 6 JWT filter chain, BCrypt password encoder, CORS config</td>
+  <td>G2 — zero critical/high SAST; G3 — auth unit tests pass</td>
+</tr>
+<tr>
+  <td>FE-05</td>
+  <td>Data migration scripts</td>
+  <td>HSQLDB DDL (RE-03)</td>
+  <td>PostgreSQL DDL + plain SQL init scripts (Flyway superseded by Docker init volume)</td>
+  <td>G4 — schema created cleanly; data integrity assertions pass</td>
+</tr>
+<tr>
+  <td>FE-06</td>
+  <td>Business logic porting</td>
+  <td>Business rule catalogue (RE-02)</td>
+  <td>Service layer Java 21 code (BF-01 → BF-08 implemented)</td>
+  <td>G3 — ≥80 % unit test coverage; G5 — BF sign-off</td>
+</tr>
+<tr>
+  <td>FE-07</td>
+  <td>Test generation</td>
+  <td>Business rule catalogue (RE-02) + sequence diagrams (RE-06)</td>
+  <td>JUnit 5 test suite (unit + integration tests per service)</td>
+  <td>G3 — 100 % pass rate; G4 — IT-* cases pass</td>
+</tr>
+<tr>
+  <td>FE-08</td>
+  <td>CI/CD pipeline generation</td>
+  <td>Project structure (FE-03)</td>
+  <td>Jenkinsfile + Dockerfile manifests + <code>docker-compose.yml</code></td>
+  <td>G1 — pipeline executes end-to-end without error</td>
+</tr>
+</table>
+
+<!-- 4. Traceability Chain -->
+<h2>4. Traceability Chain</h2>
+<p>The diagram below shows how artefacts flow from legacy source code through the Knowledge Model to verified modern code. Each arrow represents a traceable dependency captured in the traceability matrix (Artifact 05).</p>
+
+<svg viewBox="0 0 720 110" xmlns="http://www.w3.org/2000/svg" width="720" height="110" aria-label="Traceability chain diagram">
+  <!-- Legacy Code box -->
+  <rect x="4" y="30" width="110" height="46" rx="7" fill="#fee2e2" stroke="#f87171" stroke-width="1.5"/>
+  <text x="59" y="49" font-family="-apple-system,Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#991b1b" text-anchor="middle">Legacy Code</text>
+  <text x="59" y="64" font-family="-apple-system,Segoe UI,sans-serif" font-size="10" fill="#991b1b" text-anchor="middle">Struts 1.3 / Java 6</text>
+  <!-- Arrow 1 -->
+  <polygon points="118,53 130,48 130,58" fill="#57606a"/>
+  <line x1="114" y1="53" x2="130" y2="53" stroke="#57606a" stroke-width="1.5"/>
+  <!-- RE box -->
+  <rect x="130" y="20" width="114" height="66" rx="7" fill="#f3e8ff" stroke="#c084fc" stroke-width="1.5"/>
+  <text x="187" y="42" font-family="-apple-system,Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#6b21a8" text-anchor="middle">Reverse Eng.</text>
+  <text x="187" y="57" font-family="-apple-system,Segoe UI,sans-serif" font-size="10" fill="#6b21a8" text-anchor="middle">Scan · Extract</text>
+  <text x="187" y="71" font-family="-apple-system,Segoe UI,sans-serif" font-size="10" fill="#6b21a8" text-anchor="middle">Analyse · Map</text>
+  <!-- Arrow 2 -->
+  <polygon points="248,53 260,48 260,58" fill="#57606a"/>
+  <line x1="244" y1="53" x2="260" y2="53" stroke="#57606a" stroke-width="1.5"/>
+  <!-- Knowledge Model box -->
+  <rect x="260" y="30" width="122" height="46" rx="7" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="321" y="49" font-family="-apple-system,Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#6b21a8" text-anchor="middle">Knowledge Model</text>
+  <text x="321" y="64" font-family="-apple-system,Segoe UI,sans-serif" font-size="10" fill="#6b21a8" text-anchor="middle">Catalogues · ERD · Specs</text>
+  <!-- Arrow 3 -->
+  <polygon points="386,53 398,48 398,58" fill="#57606a"/>
+  <line x1="382" y1="53" x2="398" y2="53" stroke="#57606a" stroke-width="1.5"/>
+  <!-- FE box -->
+  <rect x="398" y="20" width="114" height="66" rx="7" fill="#dcfce7" stroke="#4ade80" stroke-width="1.5"/>
+  <text x="455" y="42" font-family="-apple-system,Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#166534" text-anchor="middle">Forward Eng.</text>
+  <text x="455" y="57" font-family="-apple-system,Segoe UI,sans-serif" font-size="10" fill="#166534" text-anchor="middle">Design · Generate</text>
+  <text x="455" y="71" font-family="-apple-system,Segoe UI,sans-serif" font-size="10" fill="#166534" text-anchor="middle">Port · Scaffold</text>
+  <!-- Arrow 4 -->
+  <polygon points="516,53 528,48 528,58" fill="#57606a"/>
+  <line x1="512" y1="53" x2="528" y2="53" stroke="#57606a" stroke-width="1.5"/>
+  <!-- Modern Code box -->
+  <rect x="528" y="30" width="110" height="46" rx="7" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="583" y="49" font-family="-apple-system,Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#166534" text-anchor="middle">Modern Code</text>
+  <text x="583" y="64" font-family="-apple-system,Segoe UI,sans-serif" font-size="10" fill="#166534" text-anchor="middle">Spring Boot 3.x</text>
+  <!-- Arrow 5 — loops back up to Validation -->
+  <line x1="583" y1="30" x2="583" y2="10" stroke="#57606a" stroke-width="1.5"/>
+  <line x1="583" y1="10" x2="643" y2="10" stroke="#57606a" stroke-width="1.5"/>
+  <polygon points="643,7 652,10 643,13" fill="#57606a"/>
+  <!-- Validation box -->
+  <rect x="652" y="20" width="64" height="66" rx="7" fill="#ccfbf1" stroke="#2dd4bf" stroke-width="1.5"/>
+  <text x="684" y="49" font-family="-apple-system,Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#0f766e" text-anchor="middle">Validated</text>
+  <text x="684" y="64" font-family="-apple-system,Segoe UI,sans-serif" font-size="10" fill="#0f766e" text-anchor="middle">System</text>
+</svg>
+<p style="color:#57606a;font-size:12px;text-align:center;margin-top:-8px;margin-bottom:16px;">Figure 1 — End-to-end traceability from legacy source to verified modern system</p>
+
+<!-- 5. Knowledge Preservation -->
+<h2>5. Knowledge Preservation</h2>
+<div class="callout">
+<p>Not all knowledge from the legacy system is carried forward unchanged. Some knowledge is <strong>preserved</strong> as-is, some is <strong>transformed</strong> to fit modern idioms, and some is <strong>intentionally discarded</strong> because it represents implementation detail that does not belong in the modern architecture.</p>
+</div>
+<table>
+<tr>
+  <th>Knowledge Type</th>
+  <th>Legacy Form</th>
+  <th>Modern Form</th>
+  <th>Disposition</th>
+</tr>
+<tr>
+  <td>Business rules</td>
+  <td>Embedded in Action classes (<code>execute()</code> methods) and service beans</td>
+  <td>Explicit service-layer methods in Java 21 with Javadoc</td>
+  <td><span class="badge badge-fe">Transformed</span></td>
+</tr>
+<tr>
+  <td>Data structures</td>
+  <td>Hibernate 3.5 <code>.hbm.xml</code> POJOs + HSQLDB tables</td>
+  <td>JPA <code>@Entity</code> classes + PostgreSQL 15 schema</td>
+  <td><span class="badge badge-fe">Transformed</span></td>
+</tr>
+<tr>
+  <td>Security requirements</td>
+  <td><code>spring-security.xml</code> form-login, JDBC user details</td>
+  <td>Spring Security 6 JWT stateless filter chain, BCrypt</td>
+  <td><span class="badge badge-fe">Transformed</span></td>
+</tr>
+<tr>
+  <td>UI workflows</td>
+  <td>JSP pages + Struts ActionForms + tiles layout</td>
+  <td>React 18 SPA components + React Router routes</td>
+  <td><span class="badge badge-fe">Transformed</span></td>
+</tr>
+<tr>
+  <td>Configuration</td>
+  <td>XML-heavy (<code>struts-config.xml</code>, <code>applicationContext.xml</code>)</td>
+  <td><code>application.yml</code> + Spring Boot auto-configuration</td>
+  <td><span class="badge badge-fe">Transformed</span></td>
+</tr>
+<tr>
+  <td>Test coverage</td>
+  <td>Ad-hoc JUnit 3/4 tests, no coverage enforcement</td>
+  <td>JUnit 5 with ≥80 % line coverage gate enforced in CI</td>
+  <td><span class="badge badge-fe">Transformed</span></td>
+</tr>
+<tr>
+  <td>Struts action chaining</td>
+  <td>Multi-hop <code>&lt;forward&gt;</code> declarations between actions</td>
+  <td>—</td>
+  <td><span class="badge badge-re">Discarded</span> (replaced by REST calls)</td>
+</tr>
+<tr>
+  <td>Session-based state</td>
+  <td>Server-side <code>HttpSession</code> for authentication state</td>
+  <td>—</td>
+  <td><span class="badge badge-re">Discarded</span> (stateless JWT replaces)</td>
+</tr>
+<tr>
+  <td>HSQLDB-specific SQL</td>
+  <td>In-memory HSQLDB DDL dialect, proprietary functions</td>
+  <td>—</td>
+  <td><span class="badge badge-re">Discarded</span> (rewritten for PostgreSQL)</td>
+</tr>
+</table>
+
+<!-- 6. Tooling & Automation -->
+<h2>6. Tooling &amp; Automation</h2>
+<table>
+<tr>
+  <th>Tool</th>
+  <th>Phase</th>
+  <th>Purpose</th>
+  <th>Artifact Produced</th>
+</tr>
+<tr>
+  <td><strong>IBM Bob AI</strong></td>
+  <td><span class="badge badge-re">RE</span> + <span class="badge badge-fe">FE</span></td>
+  <td>AI-assisted code understanding, artefact generation, traceability linkage</td>
+  <td>All RE + FE artefacts (this document series)</td>
+</tr>
+<tr>
+  <td>OWASP Dependency-Check</td>
+  <td><span class="badge badge-re">RE</span></td>
+  <td>CVE scanning of legacy <code>pom.xml</code> dependencies</td>
+  <td>CVE report with CVSS scores</td>
+</tr>
+<tr>
+  <td>SchemaSpy</td>
+  <td><span class="badge badge-re">RE</span></td>
+  <td>Auto-generate ERD from live HSQLDB schema</td>
+  <td>ERD PNG + HTML data dictionary</td>
+</tr>
+<tr>
+  <td>SpotBugs / PMD</td>
+  <td><span class="badge badge-re">RE</span></td>
+  <td>Static analysis of legacy Java source for code smells and bug patterns</td>
+  <td>Static analysis report</td>
+</tr>
+<tr>
+  <td>IBM Bob code-gen templates</td>
+  <td><span class="badge badge-fe">FE</span></td>
+  <td>Mustache/Freemarker templates for Spring Boot scaffolding</td>
+  <td>Controller, Service, Repository, Entity Java files</td>
+</tr>
+<tr>
+  <td>OpenAPI Generator</td>
+  <td><span class="badge badge-fe">FE</span></td>
+  <td>Generate Spring MVC stubs from <code>openapi.yaml</code></td>
+  <td>Controller interfaces + DTO classes</td>
+</tr>
+<tr>
+  <td>PostgreSQL init scripts</td>
+  <td><span class="badge badge-fe">FE</span></td>
+  <td>Plain SQL schema and seed data loaded via Docker volume mount</td>
+  <td><code>01-schema.sql</code>, <code>02-seed.sql</code></td>
+</tr>
+<tr>
+  <td>IBM Bob test generator</td>
+  <td><span class="badge badge-fe">FE</span></td>
+  <td>Generate JUnit 5 unit and integration test stubs from business rule catalogue</td>
+  <td>JUnit 5 test classes per service</td>
+</tr>
+<tr>
+  <td>Jenkins / Docker</td>
+  <td><span class="badge badge-fe">FE</span></td>
+  <td>CI/CD pipeline execution and containerisation</td>
+  <td><code>Jenkinsfile</code>, <code>Dockerfile</code>, <code>docker-compose.yml</code></td>
+</tr>
+</table>
+
+<!-- 7. Risk Management -->
+<h2>7. Risk Management in RE/FE</h2>
+<table>
+<tr>
+  <th>Risk</th>
+  <th>Phase</th>
+  <th>Mitigation</th>
+  <th>Residual Risk Level</th>
+</tr>
+<tr>
+  <td><strong>Business logic misinterpretation</strong> — AI or analyst misreads intent of a legacy method</td>
+  <td><span class="badge badge-re">RE</span></td>
+  <td>Two-pass review: IBM Bob extraction + human BA sign-off on every BF entry; unit tests derived from BF catalogue</td>
+  <td><span class="badge badge-low">Low</span></td>
+</tr>
+<tr>
+  <td><strong>Data type mismatches</strong> — HSQLDB types differ from PostgreSQL equivalents (e.g. <code>BIGINT</code> vs <code>NUMERIC</code>)</td>
+  <td><span class="badge badge-re">RE</span> + <span class="badge badge-fe">FE</span></td>
+  <td>Explicit type-mapping table produced during RE-03; DBA reviews every column in PostgreSQL DDL</td>
+  <td><span class="badge badge-low">Low</span></td>
+</tr>
+<tr>
+  <td><strong>Untranslatable Struts patterns</strong> — action chaining, tiles inheritance have no direct Spring Boot equivalent</td>
+  <td><span class="badge badge-re">RE</span></td>
+  <td>Patterns are identified in RE-06 and explicitly mapped to REST + React Router equivalents; no automatic translation attempted</td>
+  <td><span class="badge badge-med">Medium</span></td>
+</tr>
+<tr>
+  <td><strong>Missing test coverage</strong> — legacy code has no tests; FE tests may miss edge cases</td>
+  <td><span class="badge badge-fe">FE</span></td>
+  <td>Business rule catalogue drives test case generation; coverage gate ≥80 % enforced in CI; product owner acceptance tests supplement automated suite</td>
+  <td><span class="badge badge-med">Medium</span></td>
+</tr>
+<tr>
+  <td><strong>Security regression</strong> — removing session-based auth may introduce JWT misconfiguration</td>
+  <td><span class="badge badge-fe">FE</span></td>
+  <td>SAST scan (G2) run on generated security code; token expiry, signature validation, and CORS unit tested explicitly</td>
+  <td><span class="badge badge-low">Low</span></td>
+</tr>
+<tr>
+  <td><strong>Scope creep during FE</strong> — generated code adds unrequested features</td>
+  <td><span class="badge badge-fe">FE</span></td>
+  <td>Every FE artefact reviewed against RE input; IBM Bob output diff reviewed before commit; feature freeze enforced post-FE-06</td>
+  <td><span class="badge badge-low">Low</span></td>
+</tr>
+</table>
+
+<footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

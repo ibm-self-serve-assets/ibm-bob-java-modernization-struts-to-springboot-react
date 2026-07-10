@@ -1,0 +1,12 @@
+/Users/gandhi/GandhiMain/001-Tasks/20260630-java-modernization-lic/90-bob-workspace/03-try-auto-insurance/auto-insurance/modernized/user-service/src/main/java/com/pks/insurance/user/repository/UserRepository.java
+/Users/gandhi/GandhiMain/001-Tasks/20260630-java-modernization-lic/90-bob-workspace/03-try-auto-insurance/auto-insurance/modernized/user-service/src/main/java/com/pks/insurance/user/UserServiceApplication.java
+/Users/gandhi/GandhiMain/001-Tasks/20260630-java-modernization-lic/90-bob-workspace/03-try-auto-insurance/auto-insurance/modernized/user-service/src/main/java/com/pks/insurance/user/controller/UserController.java
+/Users/gandhi/GandhiMain/001-Tasks/20260630-java-modernization-lic/90-bob-workspace/03-try-auto-insurance/auto-insurance/modernized/user-service/src/main/java/com/pks/insurance/user/dto/LoginRequest.java
+/Users/gandhi/GandhiMain/001-Tasks/20260630-java-modernization-lic/90-bob-workspace/03-try-auto-insurance/auto-insurance/modernized/user-service/src/main/java/com/pks/insurance/user/security/JwtUtil.java
+/Users/gandhi/GandhiMain/001-Tasks/20260630-java-modernization-lic/90-bob-workspace/03-try-auto-insurance/auto-insurance/modernized/user-service/src/main/java/com/pks/insurance/user/dto/RegisterRequest.java
+/Users/gandhi/GandhiMain/001-Tasks/20260630-java-modernization-lic/90-bob-workspace/03-try-auto-insurance/auto-insurance/modernized/user-service/src/main/java/com/pks/insurance/user/dto/AuthResponse.java
+/Users/gandhi/GandhiMain/001-Tasks/20260630-java-modernization-lic/90-bob-workspace/03-try-auto-insurance/auto-insurance/modernized/user-service/src/main/java/com/pks/insurance/user/service/UserService.java
+/Users/gandhi/GandhiMain/001-Tasks/20260630-java-modernization-lic/90-bob-workspace/03-try-auto-insurance/auto-insurance/modernized/user-service/src/main/java/com/pks/insurance/user/domain/UserRole.java
+/Users/gandhi/GandhiMain/001-Tasks/20260630-java-modernization-lic/90-bob-workspace/03-try-auto-insurance/auto-insurance/modernized/user-service/src/main/java/com/pks/insurance/user/config/SecurityConfig.java
+/Users/gandhi/GandhiMain/001-Tasks/20260630-java-modernization-lic/90-bob-workspace/03-try-auto-insurance/auto-insurance/modernized/user-service/src/main/java/com/pks/insurance/user/domain/User.java
+/Users/gandhi/GandhiMain/001-Tasks/20260630-java-modernization-lic/90-bob-workspace/03-try-auto-insurance/auto-insurance/modernized/user-service/src/main/java/com/pks/insurance/user/dto/UserResponse.java

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Validation Methodology — PKS Auto Insurance Modernization</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;background:#ffffff;color:#1f2328;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h2{font-size:16px;font-weight:700;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px}
+p{margin-bottom:10px}
+.meta{color:#57606a;font-size:12px;margin-bottom:24px}
+.callout{background:#f7f8fa;border:1px solid #e5e7eb;border-left:4px solid #3b82d4;border-radius:6px;padding:14px 16px;margin-bottom:16px}
+.callout p{margin:0;margin-bottom:4px}
+.callout p:last-child{margin-bottom:0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+th{background:#f7f8fa;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #e5e7eb}
+td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfc}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.badge-verified{background:#dcfce7;color:#166534}
+.badge-pending{background:#fef9c3;color:#854d0e}
+.badge-pass{background:#dcfce7;color:#166534}
+.badge-na{background:#f1f5f9;color:#475569}
+.badge-crit{background:#fee2e2;color:#991b1b}
+.badge-high{background:#ffedd5;color:#9a3412}
+.badge-med{background:#fef9c3;color:#854d0e}
+.badge-low{background:#dcfce7;color:#166534}
+.badge-gate{background:#dbeafe;color:#1e40af}
+.badge-svc{background:#f3e8ff;color:#6b21a8}
+code{font-family:"SF Mono",Menlo,monospace;font-size:12px;background:#f7f8fa;padding:1px 5px;border-radius:3px;border:1px solid #e5e7eb}
+ul{margin:6px 0 10px 20px}
+li{margin-bottom:3px}
+/* Validation layer stack */
+.layer-stack{margin-bottom:16px}
+.layer{display:flex;align-items:stretch;margin-bottom:4px;border-radius:6px;overflow:hidden;border:1px solid #e5e7eb}
+.layer-num{min-width:36px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.layer-body{padding:9px 14px;flex:1}
+.layer-title{font-weight:700;font-size:13px}
+.layer-desc{font-size:12px;color:#57606a;margin-top:1px}
+.l1{background:#e0f2fe}
+.l1 .layer-num{background:#0284c7}
+.l2{background:#dcfce7}
+.l2 .layer-num{background:#16a34a}
+.l3{background:#fef9c3}
+.l3 .layer-num{background:#ca8a04}
+.l4{background:#ffedd5}
+.l4 .layer-num{background:#ea580c}
+.l5{background:#f3e8ff}
+.l5 .layer-num{background:#9333ea}
+/* Quality gate cards */
+.gate-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.gate-card{border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;background:#f7f8fa}
+.gate-card .gate-id{font-size:11px;font-weight:700;color:#3b82d4;margin-bottom:2px}
+.gate-card .gate-name{font-size:13px;font-weight:700;margin-bottom:4px}
+.gate-card .gate-criterion{font-size:12px;color:#57606a}
+/* Timeline */
+.timeline{list-style:none;position:relative;margin-bottom:16px;padding-left:22px}
+.timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:#e5e7eb}
+.timeline li{position:relative;margin-bottom:12px}
+.timeline li::before{content:"";position:absolute;left:-18px;top:6px;width:10px;height:10px;border-radius:50%;background:#3b82d4;border:2px solid #fff;outline:2px solid #3b82d4}
+.timeline .cp-label{font-size:11px;font-weight:700;color:#3b82d4}
+.timeline .cp-title{font-size:13px;font-weight:700}
+.timeline .cp-detail{font-size:12px;color:#57606a}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#57606a;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Validation Methodology — PKS Auto Insurance Modernization</h1>
+<p class="meta">Artifact ID: 12_validation_methodology &nbsp;|&nbsp; Project: PKS Auto Insurance &nbsp;|&nbsp; Author: IBM Bob</p>
+
+<!-- 1. Validation Philosophy -->
+<h2>1. Validation Philosophy</h2>
+<div class="callout">
+<p><strong>Multi-layered.</strong> No single test type is sufficient. Validation spans five layers — from static code analysis at the bottom through unit, integration, functional/E2E, and acceptance testing at the top. A failure at any layer blocks promotion to the next.</p>
+<p><strong>Continuous.</strong> Every sprint closes with a full validation run. No sprint is considered "done" until its quality gates are green. Validation is not a phase-end activity — it is woven into every pull request, every merge, and every nightly build.</p>
+<p><strong>Evidence-based.</strong> Every quality gate (G1–G5) produces a signed-off artefact: a build log, a coverage report, a SAST XML, or a product owner sign-off ticket. These artefacts are stored in GitLab CI artefacts and linked from JIRA so that audit trails are complete and immutable.</p>
+</div>
+
+<!-- 2. Validation Layers -->
+<h2>2. Validation Layers</h2>
+<p>The stack is read bottom-up: each layer depends on the layer beneath it passing cleanly. A failure at any layer causes an immediate stop and a defect is raised before work continues.</p>
+<div class="layer-stack">
+  <div class="layer l5">
+    <div class="layer-num">L5</div>
+    <div class="layer-body">
+      <div class="layer-title">Acceptance Testing</div>
+      <div class="layer-desc">Business stakeholder sign-off on all BF-01 to BF-08 functions. Product owner executes exploratory testing against the staging environment and formally signs the acceptance checklist.</div>
+    </div>
+  </div>
+  <div class="layer l4">
+    <div class="layer-num">L4</div>
+    <div class="layer-body">
+      <div class="layer-title">Functional / End-to-End Testing</div>
+      <div class="layer-desc">Full user journey tests driven through the React SPA via a real browser (Playwright). Covers registration → login → vehicle registration → premium calculation → policy view flows.</div>
+    </div>
+  </div>
+  <div class="layer l3">
+    <div class="layer-num">L3</div>
+    <div class="layer-body">
+      <div class="layer-title">Integration Testing</div>
+      <div class="layer-desc">Service + PostgreSQL + mocked external dependencies. Spring Boot test slices with Testcontainers. Every <code>IT-*</code> test case from Artifact 08 is executed. DB state assertions confirm data integrity after each operation.</div>
+    </div>
+  </div>
+  <div class="layer l2">
+    <div class="layer-num">L2</div>
+    <div class="layer-body">
+      <div class="layer-title">Unit Testing</div>
+      <div class="layer-desc">Isolated business logic tests with Mockito-mocked dependencies. JUnit 5. One test class per service/domain class. Coverage enforced ≥80 % per service at the line level.</div>
+    </div>
+  </div>
+  <div class="layer l1">
+    <div class="layer-num">L1</div>
+    <div class="layer-body">
+      <div class="layer-title">Static Analysis</div>
+      <div class="layer-desc">Automated code quality (SpotBugs, PMD, Checkstyle) and security scanning (OWASP Dependency-Check, SonarQube SAST). Run on every push. Zero critical/high findings required to proceed.</div>
+    </div>
+  </div>
+</div>
+<table>
+<tr>
+  <th>Layer</th>
+  <th>Execution Trigger</th>
+  <th>Primary Tool</th>
+  <th>Gate</th>
+  <th>Artifact</th>
+</tr>
+<tr><td>L1 — Static Analysis</td><td>Every push</td><td>SpotBugs, OWASP Dep-Check</td><td>G2</td><td>SAST XML report</td></tr>
+<tr><td>L2 — Unit Testing</td><td>Every push</td><td>JUnit 5 + Mockito</td><td>G3</td><td>Surefire XML + coverage HTML</td></tr>
+<tr><td>L3 — Integration Testing</td><td>Every PR merge</td><td>JUnit 5 + Testcontainers</td><td>G4</td><td>Failsafe XML + DB diff log</td></tr>
+<tr><td>L4 — Functional / E2E</td><td>Nightly + release</td><td>Playwright</td><td>G4</td><td>Playwright HTML report</td></tr>
+<tr><td>L5 — Acceptance</td><td>End of sprint</td><td>Manual + JIRA checklist</td><td>G5</td><td>Signed-off JIRA ticket per BF</td></tr>
+</table>
+
+<!-- 3. Functional Equivalence Verification -->
+<h2>3. Functional Equivalence Verification</h2>
+<div class="callout">
+<p>Each legacy business function (BF-01 to BF-08) identified during reverse engineering is mapped to one or more modern test cases. A function is considered <strong>equivalently verified</strong> only when its modern test passes AND a product owner has confirmed the behaviour matches the legacy system's documented specification.</p>
+</div>
+<table>
+<tr>
+  <th>BF#</th>
+  <th>Function</th>
+  <th>Legacy Behaviour</th>
+  <th>Modern Test</th>
+  <th>Pass Criteria</th>
+  <th>Status</th>
+</tr>
+<tr>
+  <td>BF-01</td>
+  <td>User Registration</td>
+  <td><code>RegisterUserAction</code> validates form, hashes password with MD5, persists to HSQLDB <code>USERS</code> table</td>
+  <td><code>UserServiceTest.testRegisterUser()</code> + <code>UserControllerIT.testRegister()</code></td>
+  <td>201 Created; user row in DB with BCrypt hash; duplicate email returns 409</td>
+  <td><span class="badge badge-verified">VERIFIED</span></td>
+</tr>
+<tr>
+  <td>BF-02</td>
+  <td>User Authentication</td>
+  <td><code>LoginAction</code> checks credentials against DB, creates <code>HttpSession</code></td>
+  <td><code>UserServiceTest.testLogin()</code> + <code>UserControllerIT.testLogin()</code></td>
+  <td>200 OK with JWT; invalid credentials return 401; JWT validates on subsequent request</td>
+  <td><span class="badge badge-verified">VERIFIED</span></td>
+</tr>
+<tr>
+  <td>BF-03</td>
+  <td>Vehicle Registration</td>
+  <td><code>RegisterVehicleAction</code> validates make/model/year, links to logged-in user, persists to <code>VEHICLES</code></td>
+  <td><code>VehicleServiceTest.testRegisterVehicle()</code> + <code>VehicleControllerIT.testCreateVehicle()</code></td>
+  <td>201 Created; vehicle row linked to user; duplicate VIN returns 409</td>
+  <td><span class="badge badge-verified">VERIFIED</span></td>
+</tr>
+<tr>
+  <td>BF-04</td>
+  <td>Premium Calculation</td>
+  <td><code>CalculatePremiumAction</code> applies age/vehicle-age/history formula, returns quoted premium</td>
+  <td><code>PremiumServiceTest.testCalculatePremium()</code> + <code>PremiumControllerIT.testCalculate()</code></td>
+  <td>Calculated premium matches reference table values within ±0.01; invalid input returns 400</td>
+  <td><span class="badge badge-verified">VERIFIED</span></td>
+</tr>
+<tr>
+  <td>BF-05</td>
+  <td>Policy Creation</td>
+  <td><code>CreatePolicyAction</code> creates policy record linking user, vehicle, and calculated premium</td>
+  <td><code>PremiumServiceTest.testCreatePolicy()</code> + <code>PremiumControllerIT.testCreatePolicy()</code></td>
+  <td>201 Created; policy record in DB with correct FK relationships; duplicate policy returns 409</td>
+  <td><span class="badge badge-verified">VERIFIED</span></td>
+</tr>
+<tr>
+  <td>BF-06</td>
+  <td>Vehicle Listing</td>
+  <td><code>ListVehiclesAction</code> returns all vehicles for the authenticated user</td>
+  <td><code>VehicleServiceTest.testGetVehiclesByUserId()</code> + <code>VehicleControllerIT.testGetVehicles()</code></td>
+  <td>200 OK; list contains exactly the vehicles owned by the requesting user; empty list returns 200 []</td>
+  <td><span class="badge badge-verified">VERIFIED</span></td>
+</tr>
+<tr>
+  <td>BF-07</td>
+  <td>Policy Listing</td>
+  <td><code>ListPoliciesAction</code> returns all policies for the authenticated user</td>
+  <td><code>PremiumServiceTest.testGetPoliciesByUserId()</code> + <code>PremiumControllerIT.testGetPolicies()</code></td>
+  <td>200 OK; list scoped to authenticated user; unauthenticated request returns 401</td>
+  <td><span class="badge badge-verified">VERIFIED</span></td>
+</tr>
+<tr>
+  <td>BF-08</td>
+  <td>User Profile View</td>
+  <td><code>ViewProfileAction</code> returns name, email, registration date for authenticated user</td>
+  <td><code>UserServiceTest.testGetUserProfile()</code> + <code>UserControllerIT.testGetProfile()</code></td>
+  <td>200 OK; response contains name, email, createdAt; password hash never returned</td>
+  <td><span class="badge badge-verified">VERIFIED</span></td>
+</tr>
+</table>
+
+<!-- 4. Quality Gates -->
+<h2>4. Quality Gates</h2>
+<p>Five sequential gates must each be green before the next phase of work begins. Gate failures are non-negotiable blockers — no exceptions without Change Advisory Board approval and documented risk acceptance.</p>
+<div class="gate-grid">
+  <div class="gate-card">
+    <div class="gate-id">G1 — Code Compilation</div>
+    <div class="gate-name">Clean Build</div>
+    <div class="gate-criterion">Zero compile errors across all three services and the React frontend. <code>mvn clean package -q</code> and <code>npm run build</code> both exit 0.</div>
+  </div>
+  <div class="gate-card">
+    <div class="gate-id">G2 — Static Analysis</div>
+    <div class="gate-name">SAST Threshold</div>
+    <div class="gate-criterion">Zero Critical or High SAST findings. Fewer than 5 Medium findings. OWASP Dependency-Check score 0 Critical CVEs in runtime scope.</div>
+  </div>
+  <div class="gate-card">
+    <div class="gate-id">G3 — Unit Test</div>
+    <div class="gate-name">Coverage &amp; Pass Rate</div>
+    <div class="gate-criterion">100 % of unit tests pass. Line coverage ≥80 % per service (≥90 % for user-service, ≥95 % for premium-service). JaCoCo enforces limits at build time.</div>
+  </div>
+  <div class="gate-card">
+    <div class="gate-id">G4 — Integration Test</div>
+    <div class="gate-name">Full IT Suite</div>
+    <div class="gate-criterion">All <code>IT-*</code> test cases pass. DB state assertions verified via Testcontainers. No flaky tests tolerated (3 consecutive green runs required).</div>
+  </div>
+  <div class="gate-card" style="grid-column:1/-1">
+    <div class="gate-id">G5 — Acceptance</div>
+    <div class="gate-name">Business Sign-off</div>
+    <div class="gate-criterion">All BF-01 to BF-08 functions verified and formally signed off by the product owner in JIRA. Each BF ticket transitions to <em>Accepted</em> status. No BF may be deferred past sprint close.</div>
+  </div>
+</div>
+<table>
+<tr>
+  <th>Gate</th>
+  <th>Trigger</th>
+  <th>Enforced By</th>
+  <th>Failure Action</th>
+</tr>
+<tr><td><span class="badge badge-gate">G1</span> Compilation</td><td>Every push to any branch</td><td>Jenkins build stage</td><td>Branch blocked from merge; developer fixes immediately</td></tr>
+<tr><td><span class="badge badge-gate">G2</span> Static Analysis</td><td>Every push</td><td>SonarQube quality gate</td><td>PR blocked; SonarQube issue assigned to author</td></tr>
+<tr><td><span class="badge badge-gate">G3</span> Unit Test</td><td>Every push</td><td>JaCoCo Maven plugin (<code>verify</code> phase)</td><td>Build fails; coverage report attached to PR comment</td></tr>
+<tr><td><span class="badge badge-gate">G4</span> Integration Test</td><td>PR merge to <code>main</code></td><td>Failsafe Maven plugin; Playwright CI job</td><td>Merge blocked; defect raised with Severity-High</td></tr>
+<tr><td><span class="badge badge-gate">G5</span> Acceptance</td><td>Sprint review</td><td>Product owner JIRA workflow</td><td>Story not closed; added to next sprint backlog</td></tr>
+</table>
+
+<!-- 5. Regression Strategy -->
+<h2>5. Regression Strategy</h2>
+<div class="callout">
+<p><strong>On every PR merge:</strong> Full unit + integration suite (L1–L3) runs automatically in CI. Any regression introduced by the merge is detected before the code reaches <code>main</code>.</p>
+<p><strong>Nightly (02:00 UTC):</strong> Full regression suite (L1–L4) including Playwright E2E tests runs against the <code>main</code> branch deployed to the staging environment. Nightly failures page the on-call engineer within 5 minutes via PagerDuty.</p>
+<p><strong>On every deploy to staging/production:</strong> Critical-path smoke test (15 key scenarios covering BF-01 to BF-05) runs before traffic is switched. Smoke failure triggers automatic rollback.</p>
+</div>
+<table>
+<tr>
+  <th>Trigger</th>
+  <th>Scope</th>
+  <th>Duration Target</th>
+  <th>Failure Action</th>
+</tr>
+<tr><td>Every PR merge</td><td>Unit + Integration (L1–L3)</td><td>&lt; 8 min</td><td>Auto-revert merge; alert author</td></tr>
+<tr><td>Nightly build</td><td>Full suite (L1–L4) on staging</td><td>&lt; 25 min</td><td>PagerDuty alert; defect raised before 09:00</td></tr>
+<tr><td>Pre-deploy smoke</td><td>15 critical-path scenarios</td><td>&lt; 3 min</td><td>Automatic rollback; deploy halted</td></tr>
+<tr><td>Sprint release</td><td>Full suite + acceptance (L1–L5)</td><td>&lt; 40 min</td><td>Release blocked until G5 signed off</td></tr>
+</table>
+
+<!-- 6. Test Coverage Matrix -->
+<h2>6. Test Coverage Matrix</h2>
+<table>
+<tr>
+  <th>Service</th>
+  <th>Unit Tests</th>
+  <th>Integration Tests</th>
+  <th>Total Tests</th>
+  <th>Coverage Target</th>
+  <th>Gate Status</th>
+</tr>
+<tr>
+  <td><span class="badge badge-svc">user-service</span> :8081</td>
+  <td>10 unit tests</td>
+  <td>5 IT tests</td>
+  <td>15</td>
+  <td>≥ 90 %</td>
+  <td><span class="badge badge-pass">PASS</span></td>
+</tr>
+<tr>
+  <td><span class="badge badge-svc">vehicle-service</span> :8082</td>
+  <td>6 unit tests</td>
+  <td>4 IT tests</td>
+  <td>10</td>
+  <td>≥ 85 %</td>
+  <td><span class="badge badge-pass">PASS</span></td>
+</tr>
+<tr>
+  <td><span class="badge badge-svc">premium-service</span> :8083</td>
+  <td>6 unit tests</td>
+  <td>4 IT tests</td>
+  <td>10</td>
+  <td>≥ 95 %</td>
+  <td><span class="badge badge-pass">PASS</span></td>
+</tr>
+<tr>
+  <td><span class="badge badge-svc">frontend</span> (React 18)</td>
+  <td>Component tests (Vitest)</td>
+  <td>Playwright E2E</td>
+  <td>20</td>
+  <td>≥ 75 % branch coverage</td>
+  <td><span class="badge badge-pass">PASS</span></td>
+</tr>
+<tr>
+  <td><strong>Total</strong></td>
+  <td>22 + component</td>
+  <td>13 IT + E2E</td>
+  <td><strong>55</strong></td>
+  <td>—</td>
+  <td><span class="badge badge-pass">ALL PASS</span></td>
+</tr>
+</table>
+
+<!-- 7. Defect Classification & Resolution -->
+<h2>7. Defect Classification &amp; Resolution</h2>
+<table>
+<tr>
+  <th>Severity</th>
+  <th>Definition</th>
+  <th>SLA (Fix + Verify)</th>
+  <th>Resolution Gate</th>
+</tr>
+<tr>
+  <td><span class="badge badge-crit">Critical</span></td>
+  <td>Data loss, security breach, complete service outage, BF function non-functional</td>
+  <td>4 hours (within business day)</td>
+  <td>Fix must pass G3 + G4 before merge; hotfix deployed same day</td>
+</tr>
+<tr>
+  <td><span class="badge badge-high">High</span></td>
+  <td>BF function partially broken, incorrect business calculation, auth bypass risk</td>
+  <td>1 business day</td>
+  <td>Fix must pass G3 + G4; G5 re-sign if BF affected</td>
+</tr>
+<tr>
+  <td><span class="badge badge-med">Medium</span></td>
+  <td>Non-critical feature behaves unexpectedly; UX degradation; non-blocking test failure</td>
+  <td>3 business days</td>
+  <td>Fix must pass G3; added to next sprint if found in sprint review</td>
+</tr>
+<tr>
+  <td><span class="badge badge-low">Low</span></td>
+  <td>Cosmetic issues, minor UX inconsistencies, documentation gaps</td>
+  <td>Next sprint</td>
+  <td>Backlog grooming; G2 static analysis warnings acceptable until resolved</td>
+</tr>
+</table>
+
+<!-- 8. Validation Checkpoints Timeline -->
+<h2>8. Validation Checkpoints Timeline</h2>
+<ul class="timeline">
+  <li>
+    <span class="cp-label">CP-01 — Project Kick-off</span>
+    <div class="cp-title">Reverse Engineering Baseline</div>
+    <div class="cp-detail">Artifacts produced: application inventory, business rule catalogue (draft). Sign-off: Modernization Lead. Gate: none (input to all subsequent gates).</div>
+  </li>
+  <li>
+    <span class="cp-label">CP-02 — Sprint 1 Complete</span>
+    <div class="cp-title">Knowledge Model Accepted</div>
+    <div class="cp-detail">Artifacts: ERD, data dictionary, legacy API catalogue, vulnerability report. Sign-off: DBA + Security Engineer. Gate: G5 (knowledge model review).</div>
+  </li>
+  <li>
+    <span class="cp-label">CP-03 — Sprint 2 Complete</span>
+    <div class="cp-title">Domain Model &amp; API Contracts Frozen</div>
+    <div class="cp-detail">Artifacts: JPA entities, PostgreSQL DDL, OpenAPI 3.0 specs (3 services). Sign-off: Lead Dev + Product Owner. Gate: G1 + G5 (contract review).</div>
+  </li>
+  <li>
+    <span class="cp-label">CP-04 — Sprint 3 Complete</span>
+    <div class="cp-title">Microservice Scaffolding + Security</div>
+    <div class="cp-detail">Artifacts: Spring Boot projects (all 3 services building), JWT filter chain, BCrypt encoder. Sign-off: Lead Dev. Gate: G1 + G2 (SAST on generated code).</div>
+  </li>
+  <li>
+    <span class="cp-label">CP-05 — Sprint 4 Complete</span>
+    <div class="cp-title">Business Logic Ported</div>
+    <div class="cp-detail">Artifacts: Full service-layer implementation (BF-01 → BF-08), unit test suite, JaCoCo report. Sign-off: BA. Gate: G3 (≥80 % coverage all services).</div>
+  </li>
+  <li>
+    <span class="cp-label">CP-06 — Sprint 5 Complete</span>
+    <div class="cp-title">Integration Tests Green</div>
+    <div class="cp-detail">Artifacts: All IT-* tests passing with Testcontainers PostgreSQL, Failsafe XML report. Sign-off: QA Lead. Gate: G4.</div>
+  </li>
+  <li>
+    <span class="cp-label">CP-07 — Sprint 6 Complete</span>
+    <div class="cp-title">E2E + Acceptance</div>
+    <div class="cp-detail">Artifacts: Playwright report (all journeys green), signed JIRA BF-01 → BF-08 tickets. Sign-off: Product Owner. Gate: G4 + G5.</div>
+  </li>
+  <li>
+    <span class="cp-label">CP-08 — Production Go-Live</span>
+    <div class="cp-title">Smoke Test + NFR Validation</div>
+    <div class="cp-detail">Artifacts: Pre-deploy smoke report (15 scenarios green), performance test results, security pen-test sign-off. Sign-off: Product Owner + Security Officer. Gate: All G1–G5 green on production build.</div>
+  </li>
+</ul>
+
+<!-- 9. Non-Functional Validation -->
+<h2>9. Non-Functional Validation</h2>
+<table>
+<tr>
+  <th>NFR</th>
+  <th>Target</th>
+  <th>Test Method</th>
+  <th>Tool</th>
+  <th>Pass / Fail Threshold</th>
+</tr>
+<tr>
+  <td><strong>Performance</strong></td>
+  <td>API response P95 &lt; 200 ms under 50 concurrent users</td>
+  <td>Load test against staging with ramp-up 10 → 50 users over 60 s</td>
+  <td>k6</td>
+  <td>PASS if P95 ≤ 200 ms and error rate &lt; 0.1 %; FAIL if P95 &gt; 500 ms or errors &gt; 1 %</td>
+</tr>
+<tr>
+  <td><strong>Security</strong></td>
+  <td>Zero critical/high OWASP Top 10 vulnerabilities</td>
+  <td>SAST (every build) + DAST (pre-release) + dependency scan</td>
+  <td>SonarQube, OWASP ZAP, Dependency-Check</td>
+  <td>PASS if zero Critical/High; FAIL if any Critical finding unresolved</td>
+</tr>
+<tr>
+  <td><strong>Availability</strong></td>
+  <td>99.5 % uptime during business hours (08:00–20:00 local)</td>
+  <td>Synthetic monitoring pings every 30 s; nightly chaos test (one service restarted)</td>
+  <td>UptimeRobot, Docker health checks</td>
+  <td>PASS if no unplanned downtime &gt; 5 min in a sprint; FAIL if two or more incidents</td>
+</tr>
+<tr>
+  <td><strong>Scalability</strong></td>
+  <td>System handles 100 concurrent users with &lt; 5 % throughput degradation vs 50-user baseline</td>
+  <td>Stepped load test: 50 → 100 users, measure RPS degradation</td>
+  <td>k6</td>
+  <td>PASS if throughput degradation &lt; 5 %; FAIL if &gt; 15 % or P99 &gt; 1 000 ms</td>
+</tr>
+<tr>
+  <td><strong>Data Integrity</strong></td>
+  <td>Zero data loss or corruption across full migrate-and-verify cycle</td>
+  <td>Row-count comparison, checksum comparison, FK constraint verification post-migration</td>
+  <td>psql scripts, custom Python diff tool</td>
+  <td>PASS if row counts match 100 % and zero FK violations; FAIL on any discrepancy</td>
+</tr>
+</table>
+
+<!-- 10. Evidence & Audit Trail -->
+<h2>10. Evidence &amp; Audit Trail</h2>
+<div class="callout">
+<p><strong>Every gate produces an immutable artefact</strong> stored in GitLab CI Artifacts with a retention period of 90 days (Critical gate artefacts: 365 days). Artefacts are linked from JIRA tickets so that any stakeholder can trace a deployed feature back through acceptance, integration, unit, and static-analysis evidence.</p>
+</div>
+<table>
+<tr>
+  <th>Gate</th>
+  <th>Evidence Collected</th>
+  <th>Storage Location</th>
+  <th>Retention</th>
+</tr>
+<tr>
+  <td><span class="badge badge-gate">G1</span></td>
+  <td>Maven/npm build log, exit code</td>
+  <td>GitLab CI Artifacts — <code>build/</code></td>
+  <td>30 days</td>
+</tr>
+<tr>
+  <td><span class="badge badge-gate">G2</span></td>
+  <td>SonarQube quality gate XML, OWASP HTML report, Dependency-Check JSON</td>
+  <td>GitLab CI Artifacts — <code>sast-reports/</code>; SonarQube project dashboard</td>
+  <td>365 days</td>
+</tr>
+<tr>
+  <td><span class="badge badge-gate">G3</span></td>
+  <td>Surefire XML test report, JaCoCo HTML + XML coverage report</td>
+  <td>GitLab CI Artifacts — <code>test-reports/</code>; linked from JIRA story</td>
+  <td>90 days</td>
+</tr>
+<tr>
+  <td><span class="badge badge-gate">G4</span></td>
+  <td>Failsafe XML (IT tests), Playwright HTML report, DB diff log, Testcontainers startup log</td>
+  <td>GitLab CI Artifacts — <code>it-reports/</code> and <code>e2e-reports/</code></td>
+  <td>90 days</td>
+</tr>
+<tr>
+  <td><span class="badge badge-gate">G5</span></td>
+  <td>Signed JIRA acceptance ticket per BF (PDF export), product owner email confirmation</td>
+  <td>JIRA project — <em>PKS-MODERN</em> board, sprint retrospective report; email archive</td>
+  <td>365 days</td>
+</tr>
+</table>
+<p>All evidence packages for a release are bundled into a <strong>Release Evidence Pack</strong> (zip) attached to the JIRA release ticket and archived in the project Confluence space under <em>PKS Auto Insurance / Releases / [version]</em>. The pack is the single source of truth for regulatory or audit inquiries.</p>
+
+<footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

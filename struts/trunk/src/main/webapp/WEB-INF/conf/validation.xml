@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE form-validation PUBLIC
+          "-//Apache Software Foundation//DTD Commons Validator Rules Configuration 1.1.3//EN"
+          "http://jakarta.apache.org/commons/dtds/validator_1_1_3.dtd">
+
+<form-validation>
+
+	<!-- This is a minimal Validator form file with a couple of examples. -->
+
+	<global>
+
+		<!-- An example global constant <constant> <constant-name>postalCode</constant-name> 
+			<constant-value>^\d{5}\d*$</constant-value> </constant> end example -->
+
+	</global>
+
+	<formset>
+
+		<!-- Login form -->
+		<form name="LoginForm">
+			<field property="ssn" depends="required">
+				<arg key="err.LoginForm.username" />
+			</field>
+			<field property="passwd" depends="required,mask">
+				<arg key="err.LoginForm.passwd" />
+				<var>
+					<var-name>mask</var-name>
+					<var-value>^[0-9a-zA-Z]*$</var-value>
+				</var>
+			</field>
+		</form>
+
+		<form name="UserForm">
+			<field property="ssn" depends="required,minlength,maxlength">
+				<arg key="err.UserForm.ssn" />
+				<var>
+				<var-name>minlength</var-name>
+				<var-value>6</var-value>
+				</var>
+				<var>
+				<var-name>maxlength</var-name>
+				<var-value>10</var-value>
+				</var>
+			</field>
+			<field property="passwd" depends="required,mask">
+				<arg key="err.UserForm.passwd" />
+<!-- 				<msg name="mask" key="err.UserForm.passwd.mask" /> -->
+				<var>
+					<var-name>mask</var-name>
+					<var-value>^[0-9a-zA-Z]*$</var-value>
+				</var>
+			</field>
+
+			<field property="cpasswd" depends="validwhen">
+				<msg name="validwhen" key="err.UserForm.cpasswd.notmatch" />
+				<var>
+					<var-name>test</var-name>
+					<var-value>(passwd == *this*)</var-value>
+				</var>
+			</field>
+
+			<!-- <field property="firstName" depends="required"> <arg key="UserForm.firstName" 
+				/> </field> <field property="lastName" depends="required"> <arg key="UserForm.lastName" 
+				/> </field> -->
+			<field property="gender" depends="required">
+				<arg key="err.UserForm.gender" />
+			</field>
+			<!-- 
+		    <field property="mobileNo" depends="required,long,longRange">
+				<arg key="err.UserForm.mobileNo" />
+				<arg position="1" name="longRange" key="${var:min}" resource="false" />
+				<arg position="2" name="longRange" key="${var:max}" resource="false" />
+				<var>
+					<var-name>min</var-name>
+					<var-value>10</var-value>
+				</var>
+				<var>
+					<var-name>max</var-name>
+					<var-value>10</var-value>
+				</var>
+			</field>
+			 -->
+			<field property="email" depends="required,email">
+				<arg key="err.UserForm.email" />
+<!-- 				<msg name="required" key="err.UserForm.email.required" /> -->
+<!-- 				<msg name="email" key="err.UserForm.email.email" /> -->
+
+			</field>
+			<!-- <field property="city" depends="required"> <arg key="UserForm." /> 
+				</field> <field property="bloodGroup" depends="required"> <arg key="UserForm.bloodGroup" 
+				/> </field> <field property="drivingLicence" depends="required"> <arg key="UserForm.drivingLicence" 
+				/> </field> -->
+			<field property="dateOfBirthString" depends="required,date">
+				<arg key="err.UserForm.dateOfBirthString" />
+				<var>
+					<var-name>datePattern</var-name>
+					<var-value>yyyy-MM-dd</var-value>
+				</var>
+			</field>
+		</form>
+
+
+		<form name="VehicleForm">
+			<field property="type" depends="required">
+				<!-- is passed as argument not as full message, when compared with <msg 
+					tag>(having full control over the message display for particular type of 
+					validation) rest message is added automatically 
+					<msg name="required" key="Type cannot be empty"/>-->
+				<arg key="err.VehicleForm.type" />
+			</field>
+			<field property="model" depends="required">
+				<arg key="err.VehicleForm.model" />
+			</field>
+			<field property="make" depends="required">
+				<arg key="err.VehicleForm.make" />
+			</field>
+			<field property="regNo" depends="required">
+				<arg key="err.VehicleForm.regNo" />
+			</field>
+			<field property="policyType" depends="required">
+				<arg key="err.VehicleForm.policyType" />
+			</field>
+			<field property="policyAmount" depends="required">
+				<arg key="err.VehicleForm.policyAmount" />
+			</field>
+			<field property="mfYear" depends="required">
+				<arg key="err.VehicleForm.mfYear" />
+			</field>
+			<field property="totalAccident" depends="required">
+				<arg key="err.VehicleForm.totalAccident" />
+			</field>
+		</form>
+	</formset>
+
+	<!-- An example formset for another locale -->
+	<formset language="fr">
+
+		<constant>
+			<constant-name>postalCode</constant-name>
+			<constant-value>^[0-9a-zA-Z]*$</constant-value>
+		</constant>
+
+		<!-- An example form -->
+		<form name="logonForm">
+			<field property="username" depends="required">
+				<arg key="logonForm.username" />
+			</field>
+			<field property="password" depends="required,mask">
+				<arg key="logonForm.password" />
+				<var>
+					<var-name>mask</var-name>
+					<var-value>^[0-9a-zA-Z]*$</var-value>
+				</var>
+			</field>
+		</form>
+
+	</formset>
+
+</form-validation>
