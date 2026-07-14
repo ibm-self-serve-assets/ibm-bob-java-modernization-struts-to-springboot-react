@@ -1,4 +1,4 @@
-# IBM Bob Java Modernization: Migrating Struts, JSP, and Java Applications to React and Spring Boot
+# IBM Bob Java Modernization: Migrating Legacy Struts Application to into a Modern React & Spring Boot Microservices
 
 In this document, you will find detailed guidance on how to use IBM Bob, an AI-powered software engineering assistant that helps modernize legacy Java applications with speed, accuracy, and confidence.
 
